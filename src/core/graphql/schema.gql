@@ -32,6 +32,31 @@ input ChangeProfileInfoInput {
   username: String!
 }
 
+type Coordinates {
+  latitude: Float!
+  longitude: Float!
+}
+
+input CreateEventInput {
+  address: String!
+  ageRestriction: Float
+  city: String
+  currency: String
+  description: String!
+  endTime: DateTime
+  eventProperties: [EventProperty!]!
+  eventType: EventType!
+  isPrivate: Boolean!
+  maxParticipants: Float
+  paymentType: PaymentType!
+  photoUrls: [String!]!
+  placeName: String
+  price: Float
+  startTime: DateTime!
+  tags: [String!]!
+  title: String!
+}
+
 input CreateUserInput {
   email: String!
   password: String!
@@ -60,11 +85,67 @@ input EnableTotpInput {
   secret: String!
 }
 
+type EventModel {
+  ageRestriction: Float
+  createdAt: DateTime!
+  currency: String
+  description: String!
+  endTime: DateTime
+  eventProperties: [EventProperty!]!
+  eventType: EventType!
+  favoritedBy: [UserModel!]
+  id: String!
+  isPrivate: Boolean!
+  isVerified: Boolean!
+  location: LocationModel!
+  maxParticipants: Float
+  organizer: UserModel!
+  participants: [UserModel!]
+  paymentType: PaymentType!
+  photoUrls: [String!]!
+  postedDate: DateTime!
+  price: Float
+  startTime: DateTime!
+  status: String!
+  tags: [String!]!
+  title: String!
+  updatedAt: DateTime!
+}
+
+enum EventProperty {
+  AGE_18_PLUS
+  AGE_21_PLUS
+  ALCOHOL_FREE
+  CHARITY
+  FAMILY_FRIENDLY
+  HEALTHY_LIFESTYLE
+  INDOOR
+  ONLINE
+  OUTDOOR
+  PET_FRIENDLY
+}
+
+enum EventType {
+  CONCERT
+  EXHIBITION
+  FESTIVAL
+  LECTURE
+  MEETUP
+  OTHER
+  PARTY
+  SPORT
+  WALK
+  WORKSHOP
+}
+
 type LocationModel {
+  address: String
   city: String!
-  country: String!
-  latidute: Float!
-  longitude: Float!
+  coordinates: Coordinates!
+  createdAt: DateTime!
+  id: String!
+  placeName: String
+  updatedAt: DateTime!
 }
 
 input LoginInput {
@@ -80,6 +161,7 @@ type Mutation {
   changeProfileAvatar(avatar: Upload!): Boolean!
   changeProfileInfo(data: ChangeProfileInfoInput!): Boolean!
   clearSessionCookie: Boolean!
+  createEvent(input: CreateEventInput!): EventModel!
   createSocialLink(data: SocialLinkInput!): Boolean!
   createUser(data: CreateUserInput!): Boolean!
   deactivateAccount(data: DeactivateAccountInput!): AuthModel!
@@ -126,9 +208,21 @@ type NotificationSettingsModel {
 
 enum NotificationType {
   ENABLE_TWO_FACTOR
+  EVENT_CANCELLED
+  EVENT_INVITE
+  EVENT_REMINDER
+  NEW_EVENT_FROM_ORGANIZER
+  PAYMENT_SUCCESS
+}
+
+enum PaymentType {
+  DONATION
+  FREE
+  PAYMENT_REQUIRED
 }
 
 type Query {
+  events: [EventModel!]!
   findCurrentSession: SessionModel!
   findNotificationsByUser: [NotificationModel!]!
   findNotificationsUnreadCount: Float!
@@ -145,7 +239,7 @@ input ResetPasswordInput {
 type SessionMetadataModel {
   device: DeviceModel!
   ip: String!
-  location: LocationModel!
+  location: UserLocationModel!
 }
 
 type SessionModel {
@@ -183,9 +277,17 @@ type TotpModel {
 """The `Upload` scalar type represents a file upload."""
 scalar Upload
 
+type UserLocationModel {
+  city: String!
+  country: String!
+  latidute: Float!
+  longitude: Float!
+}
+
 type UserModel {
   avatar: String
   bio: String
+  birthDate: DateTime
   createdAt: DateTime!
   deactivatedAt: DateTime
   displayName: String!
@@ -196,9 +298,9 @@ type UserModel {
   isTotpEnabled: Boolean!
   isVerified: Boolean!
   notificationSettings: NotificationSettingsModel
-  notifications: [NotificationModel!]!
+  notifications: [NotificationModel!]
   password: String!
-  socialLinks: [SocialLinkModel!]!
+  socialLinks: [SocialLinkModel!]
   telegramId: String
   totpSecret: String
   updatedAt: DateTime!

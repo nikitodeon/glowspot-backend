@@ -1,0 +1,91 @@
+import { Field, ObjectType } from '@nestjs/graphql'
+import { registerEnumType } from '@nestjs/graphql'
+import {
+	Event,
+	EventProperty,
+	EventType,
+	PaymentType,
+	User
+} from '@prisma/generated'
+
+import { UserModel } from '../../auth/account/models/user.model'
+import { LocationModel } from '../../events/models/location.model'
+
+registerEnumType(EventType, { name: 'EventType' })
+registerEnumType(EventProperty, { name: 'EventProperty' })
+registerEnumType(PaymentType, { name: 'PaymentType' })
+
+@ObjectType()
+export class EventModel {
+	@Field()
+	id: string
+
+	@Field()
+	title: string
+
+	@Field()
+	description: string
+
+	@Field()
+	startTime: Date
+
+	@Field({ nullable: true })
+	endTime?: Date
+
+	@Field(() => [String])
+	photoUrls: string[]
+
+	@Field(() => EventType)
+	eventType: EventType
+
+	@Field(() => [EventProperty])
+	eventProperties: EventProperty[]
+
+	@Field(() => PaymentType)
+	paymentType: PaymentType
+
+	@Field({ nullable: true })
+	price?: number
+
+	@Field({ nullable: true })
+	currency?: string
+
+	@Field()
+	postedDate: Date
+
+	@Field()
+	isVerified: boolean
+
+	@Field()
+	isPrivate: boolean
+
+	@Field({ nullable: true })
+	maxParticipants?: number
+
+	@Field(() => [String])
+	tags: string[]
+
+	@Field()
+	status: string
+
+	@Field({ nullable: true })
+	ageRestriction?: number
+
+	@Field(() => LocationModel)
+	location: LocationModel
+
+	@Field(() => UserModel)
+	organizer: User
+
+	@Field(() => [UserModel], { nullable: true })
+	participants?: User[]
+
+	@Field(() => [UserModel], { nullable: true })
+	favoritedBy?: User[]
+
+	@Field()
+	createdAt: Date
+
+	@Field()
+	updatedAt: Date
+}

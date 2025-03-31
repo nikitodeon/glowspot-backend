@@ -52,7 +52,12 @@ async function bootstrap() {
 	)
 
 	app.enableCors({
-		origin: config.getOrThrow<string>('ALLOWED_ORIGIN'),
+		// origin: config.getOrThrow<string>('ALLOWED_ORIGIN'),
+		origin: [
+			config.getOrThrow<string>('ALLOWED_ORIGIN'), // Your frontend
+			'https://studio.apollographql.com', // Apollo Studio
+			'http://localhost:4000' // Local development
+		],
 		credentials: true,
 		exposedHeaders: ['set-cookie']
 	})

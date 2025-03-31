@@ -6,6 +6,11 @@ import { NotificationModel } from '@/src/modules/notification/models/notificatio
 
 import { SocialLinkModel } from '../../profile/models/social-link.model'
 
+// import { EventModel } from '@/src/modules/event/models/event.model'
+
+// import { PaymentModel } from '@/src/modules/payment/models/payment.model'
+// import { EventReviewModel } from '@/src/modules/event/models/event-review.model'
+
 @ObjectType()
 export class UserModel implements User {
 	@Field(() => ID)
@@ -50,14 +55,29 @@ export class UserModel implements User {
 	@Field(() => Date, { nullable: true })
 	public deactivatedAt: Date
 
-	@Field(() => [SocialLinkModel])
+	@Field(() => Date, { nullable: true })
+	public birthDate: Date // ✅ Добавили поле birthDate
+
+	@Field(() => [SocialLinkModel], { nullable: true })
 	public socialLinks: SocialLinkModel[]
 
-	@Field(() => [NotificationModel])
+	@Field(() => [NotificationModel], { nullable: true })
 	public notifications: NotificationModel[]
 
 	@Field(() => NotificationSettingsModel, { nullable: true })
 	public notificationSettings: NotificationSettingsModel
+
+	//   @Field(() => [EventModel], { nullable: true })
+	//   public organizedEvents: EventModel[]  // ✅ Добавлено
+
+	//   @Field(() => [EventModel], { nullable: true })
+	//   public participatingIn: EventModel[]  // ✅ Добавлено
+
+	//   @Field(() => [PaymentModel], { nullable: true })
+	//   public payments: PaymentModel[]  // ✅ Добавлено
+
+	//   @Field(() => [EventReviewModel], { nullable: true })
+	//   public reviews: EventReviewModel[]  // ✅ Добавлено
 
 	@Field(() => Date)
 	public createdAt: Date

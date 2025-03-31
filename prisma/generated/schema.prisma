@@ -1,11 +1,13 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "./generated"
+  provider        = "prisma-client-js"
+  output          = "./generated"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("POSTGRES_URI")
+  provider   = "postgresql"
+  url        = env("POSTGRES_URI")
+  extensions = [postgis]
 }
 
 model User {
@@ -31,14 +33,79 @@ model User {
   isDeactivated Boolean   @default(false) @map("is_deactivated")
   deactivatedAt DateTime? @map("deactivated_at")
 
+  birthDate DateTime? @map("birth_date")
+
   tokens               Token[]
   socialLinks          SocialLink[]
   notifications        Notification[]
   notificationSettings NotificationSettings?
-  createdAt            DateTime              @default(now()) @map("created_at")
-  updatedAt            DateTime              @updatedAt @map("updated_at")
+  organizedEvents      Event[]               @relation("OrganizedEvents")
+  participatingIn      Event[]               @relation("EventParticipants")
+  favorites            Event[]               @relation("FavoriteProperties")
+  payments             Payment[]
+
+  reviews EventReview[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("users")
+}
+
+model Event {
+  id              String          @id @default(uuid())
+  title           String
+  description     String
+  startTime       DateTime        @map("start_time")
+  endTime         DateTime?       @map("end_time")
+  photoUrls       String[]        @map("photo_urls")
+  eventType       EventType
+  eventProperties EventProperty[]
+  paymentType     PaymentType
+  price           Float?
+  currency        String?         @default("BYN")
+  postedDate      DateTime        @default(now()) @map("posted_date")
+  locationId      String
+  organizerId     String
+  isVerified      Boolean         @default(false) @map("is_verified")
+  isPrivate       Boolean         @default(false) @map("is_private")
+  maxParticipants Int?            @map("max_participants")
+  tags            String[]
+  status          EventStatus     @default(UPCOMING)
+  ageRestriction  Int?            @map("age_restriction")
+
+  location     Location      @relation(fields: [locationId], references: [id])
+  organizer    User          @relation(fields: [organizerId], references: [id], name: "OrganizedEvents")
+  participants User[]        @relation("EventParticipants")
+  favoritedBy  User[]        @relation("FavoriteProperties")
+  payments     Payment[]
+  reviews      EventReview[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("events")
+}
+
+enum EventStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+}
+
+model EventReview {
+  id        String   @id @default(uuid())
+  rating    Float
+  comment   String?
+  event     Event    @relation(fields: [eventId], references: [id])
+  eventId   String   @map("event_id")
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("event_reviews")
 }
 
 model SocialLink {
@@ -104,6 +171,37 @@ model Token {
   @@map("tokens")
 }
 
+model Payment {
+  id            String        @id @default(uuid())
+  amount        Float
+  currency      String        @default("BYN")
+  paymentDate   DateTime      @default(now()) @map("payment_date")
+  status        PaymentStatus
+  user          User          @relation(fields: [userId], references: [id])
+  userId        String        @map("user_id")
+  event         Event         @relation(fields: [eventId], references: [id])
+  eventId       String        @map("event_id")
+  transactionId String?       @unique @map("transaction_id")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  @@map("payments")
+}
+
+model Location {
+  id          String                                @id @default(uuid())
+  address     String?
+  city        String                                @default("Minsk")
+  coordinates Unsupported("geography(Point, 4326)")
+  placeName   String?                               @map("place_name")
+  events      Event[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("locations")
+}
+
 enum TokenType {
   EMAIL_VERIFY
   PASSWORD_RESET
@@ -114,7 +212,59 @@ enum TokenType {
 }
 
 enum NotificationType {
+  EVENT_INVITE
+  EVENT_REMINDER
+  PAYMENT_SUCCESS
+  EVENT_CANCELLED
+  NEW_EVENT_FROM_ORGANIZER
   ENABLE_TWO_FACTOR
 
   @@map("notification_types")
+}
+
+enum EventType {
+  EXHIBITION
+  MEETUP
+  WALK
+  PARTY
+  CONCERT
+  SPORT
+  FESTIVAL
+  LECTURE
+  WORKSHOP
+  OTHER
+
+  @@map("event_types")
+}
+
+enum EventProperty {
+  AGE_18_PLUS
+  AGE_21_PLUS
+  ALCOHOL_FREE
+  HEALTHY_LIFESTYLE
+  FAMILY_FRIENDLY
+  PET_FRIENDLY
+  OUTDOOR
+  INDOOR
+  ONLINE
+  CHARITY
+
+  @@map("event_properties")
+}
+
+enum PaymentType {
+  FREE
+  PAYMENT_REQUIRED
+  DONATION
+
+  @@map("payment_types")
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+
+  @@map("payment_statuses")
 }

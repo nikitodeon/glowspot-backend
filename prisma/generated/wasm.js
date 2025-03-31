@@ -132,8 +132,43 @@ exports.Prisma.UserScalarFieldEnum = {
   totpSecret: 'totpSecret',
   isDeactivated: 'isDeactivated',
   deactivatedAt: 'deactivatedAt',
+  birthDate: 'birthDate',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.EventScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  description: 'description',
+  startTime: 'startTime',
+  endTime: 'endTime',
+  photoUrls: 'photoUrls',
+  eventType: 'eventType',
+  eventProperties: 'eventProperties',
+  paymentType: 'paymentType',
+  price: 'price',
+  currency: 'currency',
+  postedDate: 'postedDate',
+  locationId: 'locationId',
+  organizerId: 'organizerId',
+  isVerified: 'isVerified',
+  isPrivate: 'isPrivate',
+  maxParticipants: 'maxParticipants',
+  tags: 'tags',
+  status: 'status',
+  ageRestriction: 'ageRestriction',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.EventReviewScalarFieldEnum = {
+  id: 'id',
+  rating: 'rating',
+  comment: 'comment',
+  eventId: 'eventId',
+  userId: 'userId',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.SocialLinkScalarFieldEnum = {
@@ -175,6 +210,28 @@ exports.Prisma.TokenScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PaymentScalarFieldEnum = {
+  id: 'id',
+  amount: 'amount',
+  currency: 'currency',
+  paymentDate: 'paymentDate',
+  status: 'status',
+  userId: 'userId',
+  eventId: 'eventId',
+  transactionId: 'transactionId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.LocationScalarFieldEnum = {
+  id: 'id',
+  address: 'address',
+  city: 'city',
+  placeName: 'placeName',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -189,7 +246,52 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
+exports.EventType = exports.$Enums.EventType = {
+  EXHIBITION: 'EXHIBITION',
+  MEETUP: 'MEETUP',
+  WALK: 'WALK',
+  PARTY: 'PARTY',
+  CONCERT: 'CONCERT',
+  SPORT: 'SPORT',
+  FESTIVAL: 'FESTIVAL',
+  LECTURE: 'LECTURE',
+  WORKSHOP: 'WORKSHOP',
+  OTHER: 'OTHER'
+};
+
+exports.PaymentType = exports.$Enums.PaymentType = {
+  FREE: 'FREE',
+  PAYMENT_REQUIRED: 'PAYMENT_REQUIRED',
+  DONATION: 'DONATION'
+};
+
+exports.EventStatus = exports.$Enums.EventStatus = {
+  UPCOMING: 'UPCOMING',
+  ONGOING: 'ONGOING',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+  ARCHIVED: 'ARCHIVED'
+};
+
+exports.EventProperty = exports.$Enums.EventProperty = {
+  AGE_18_PLUS: 'AGE_18_PLUS',
+  AGE_21_PLUS: 'AGE_21_PLUS',
+  ALCOHOL_FREE: 'ALCOHOL_FREE',
+  HEALTHY_LIFESTYLE: 'HEALTHY_LIFESTYLE',
+  FAMILY_FRIENDLY: 'FAMILY_FRIENDLY',
+  PET_FRIENDLY: 'PET_FRIENDLY',
+  OUTDOOR: 'OUTDOOR',
+  INDOOR: 'INDOOR',
+  ONLINE: 'ONLINE',
+  CHARITY: 'CHARITY'
+};
+
 exports.NotificationType = exports.$Enums.NotificationType = {
+  EVENT_INVITE: 'EVENT_INVITE',
+  EVENT_REMINDER: 'EVENT_REMINDER',
+  PAYMENT_SUCCESS: 'PAYMENT_SUCCESS',
+  EVENT_CANCELLED: 'EVENT_CANCELLED',
+  NEW_EVENT_FROM_ORGANIZER: 'NEW_EVENT_FROM_ORGANIZER',
   ENABLE_TWO_FACTOR: 'ENABLE_TWO_FACTOR'
 };
 
@@ -200,12 +302,23 @@ exports.TokenType = exports.$Enums.TokenType = {
   TELEGRAM_AUTH: 'TELEGRAM_AUTH'
 };
 
+exports.PaymentStatus = exports.$Enums.PaymentStatus = {
+  PENDING: 'PENDING',
+  PAID: 'PAID',
+  FAILED: 'FAILED',
+  REFUNDED: 'REFUNDED'
+};
+
 exports.Prisma.ModelName = {
   User: 'User',
+  Event: 'Event',
+  EventReview: 'EventReview',
   SocialLink: 'SocialLink',
   NotificationSettings: 'NotificationSettings',
   Notification: 'Notification',
-  Token: 'Token'
+  Token: 'Token',
+  Payment: 'Payment',
+  Location: 'Location'
 };
 
 /**

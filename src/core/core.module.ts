@@ -14,6 +14,7 @@ import { VerificationModule } from '../modules/auth/verification/verification.mo
 // import { ChannelModule } from '../modules/channel/channel.module'
 // import { ChatModule } from '../modules/chat/chat.module'
 import { CronModule } from '../modules/cron/cron.module'
+import { EventsModule } from '../modules/events/events.module'
 // import { FollowModule } from '../modules/follow/follow.module'
 // import { LivekitModule } from '../modules/libs/livekit/livekit.module'
 import { MailModule } from '../modules/libs/mail/mail.module'
@@ -79,10 +80,11 @@ import { RedisModule } from './redis/redis.module'
 		// ChatModule,
 		// FollowModule,
 		// ChannelModule,
-		NotificationModule
+		NotificationModule,
 		// PlanModule,
 		// TransactionModule,
 		// SubscriptionModule
+		EventsModule
 	]
 })
 export class CoreModule {}

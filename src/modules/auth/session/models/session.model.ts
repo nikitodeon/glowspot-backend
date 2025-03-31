@@ -7,7 +7,7 @@ import type {
 } from '@/src/shared/types/session-metadata.types'
 
 @ObjectType()
-export class LocationModel implements LocationInfo {
+export class UserLocationModel implements LocationInfo {
 	@Field(() => String)
 	public country: string
 
@@ -35,8 +35,8 @@ export class DeviceModel implements DeviceInfo {
 
 @ObjectType()
 export class SessionMetadataModel implements SessionMetadata {
-	@Field(() => LocationModel)
-	public location: LocationModel
+	@Field(() => UserLocationModel)
+	public location: UserLocationModel
 
 	@Field(() => DeviceModel)
 	public device: DeviceModel
