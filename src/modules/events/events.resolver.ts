@@ -22,18 +22,84 @@ import { EventModel } from './models/event.model'
 export class EventsResolver {
 	constructor(private readonly eventsService: EventsService) {}
 
-	@Query(() => [EventModel])
-	async events() {
+	@Query(() => [EventModel], { name: 'getAllEvents' })
+	async getAllEvents() {
 		return this.eventsService.getAllEvents()
 	}
 
 	@Authorization()
 	@Mutation(() => EventModel)
-	// @UseGuards(GqlAuthGuard)
+	@UseGuards(GqlAuthGuard)
 	async createEvent(
 		@Args('input') input: CreateEventInput,
 		@Authorized() user: User
 	) {
 		return this.eventsService.createEvent(input, user.id)
+	}
+	@Query(() => EventModel, { name: 'getEventById' })
+	async getEventById(@Args('id') id: string) {
+		return this.eventsService.getEventById(id)
+	}
+
+	@Authorization()
+	@Query(() => [EventModel], { name: 'getMyOrganizedEvents' })
+	async getMyOrganizedEvents(@Authorized() user: User) {
+		return this.eventsService.getEventsByOrganizer(user.id)
+	}
+	@Authorization()
+	@Mutation(() => Boolean)
+	@UseGuards(GqlAuthGuard)
+	async participateInEvent(
+		@Args('eventId') eventId: string,
+		@Authorized() user: User
+	) {
+		return this.eventsService.participateInEvent(eventId, user.id)
+	}
+
+	@Authorization()
+	@Query(() => [EventModel], { name: 'getEventsWhereIParticipate' })
+	@UseGuards(GqlAuthGuard)
+	async getEventsWhereIParticipate(@Authorized() user: User) {
+		return this.eventsService.getEventsWhereIParticipate(user.id)
+	}
+
+	@Authorization()
+	@Mutation(() => Boolean)
+	@UseGuards(GqlAuthGuard)
+	async addToFavorites(
+		@Args('eventId') eventId: string,
+		@Authorized() user: User
+	) {
+		return this.eventsService.addToFavorites(eventId, user.id)
+	}
+
+	@Authorization()
+	@Mutation(() => Boolean)
+	@UseGuards(GqlAuthGuard)
+	async removeFromFavorites(
+		@Args('eventId') eventId: string,
+		@Authorized() user: User
+	) {
+		return this.eventsService.removeFromFavorites(eventId, user.id)
+	}
+
+	@Authorization()
+	@Query(() => [EventModel], {
+		name: 'getFavoriteEvents',
+		description: 'Возвращает список избранных событий пользователя'
+	})
+	@UseGuards(GqlAuthGuard)
+	async getFavoriteEvents(@Authorized() user: User) {
+		console.log(`Fetching favorite events for user ${user.id}`)
+		try {
+			const favorites = await this.eventsService.getFavoriteEvents(
+				user.id
+			)
+			console.log(`Found ${favorites.length} favorite events`)
+			return favorites
+		} catch (error) {
+			console.error('Error in getFavoriteEvents resolver:', error)
+			throw error
+		}
 	}
 }

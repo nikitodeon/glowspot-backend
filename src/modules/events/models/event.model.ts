@@ -7,6 +7,7 @@ import {
 	PaymentType,
 	User
 } from '@prisma/generated'
+import { EventStatus } from '@prisma/generated'
 
 import { UserModel } from '../../auth/account/models/user.model'
 import { LocationModel } from '../../events/models/location.model'
@@ -14,6 +15,7 @@ import { LocationModel } from '../../events/models/location.model'
 registerEnumType(EventType, { name: 'EventType' })
 registerEnumType(EventProperty, { name: 'EventProperty' })
 registerEnumType(PaymentType, { name: 'PaymentType' })
+registerEnumType(EventStatus, { name: 'EventStatus' })
 
 @ObjectType()
 export class EventModel {
@@ -65,8 +67,8 @@ export class EventModel {
 	@Field(() => [String])
 	tags: string[]
 
-	@Field()
-	status: string
+	@Field(() => EventStatus)
+	status: EventStatus
 
 	@Field({ nullable: true })
 	ageRestriction?: number
@@ -75,13 +77,13 @@ export class EventModel {
 	location: LocationModel
 
 	@Field(() => UserModel)
-	organizer: User
+	organizer: UserModel
 
 	@Field(() => [UserModel], { nullable: true })
-	participants?: User[]
+	participants?: UserModel[]
 
 	@Field(() => [UserModel], { nullable: true })
-	favoritedBy?: User[]
+	favoritedBy?: UserModel[]
 
 	@Field()
 	createdAt: Date

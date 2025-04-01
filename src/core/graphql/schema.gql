@@ -106,7 +106,7 @@ type EventModel {
   postedDate: DateTime!
   price: Float
   startTime: DateTime!
-  status: String!
+  status: EventStatus!
   tags: [String!]!
   title: String!
   updatedAt: DateTime!
@@ -123,6 +123,14 @@ enum EventProperty {
   ONLINE
   OUTDOOR
   PET_FRIENDLY
+}
+
+enum EventStatus {
+  ARCHIVED
+  CANCELLED
+  COMPLETED
+  ONGOING
+  UPCOMING
 }
 
 enum EventType {
@@ -155,6 +163,7 @@ input LoginInput {
 }
 
 type Mutation {
+  addToFavorites(eventId: String!): Boolean!
   changeEmail(data: ChangeEmailInput!): Boolean!
   changeNotificationsSettings(data: ChangeNotificationsSettingsInput!): ChangeNotificationsSettingsResponse!
   changePassword(data: ChangePasswordInput!): Boolean!
@@ -170,6 +179,8 @@ type Mutation {
   loginUser(data: LoginInput!): AuthModel!
   logoutUser: Boolean!
   newPassword(data: NewPasswordInput!): Boolean!
+  participateInEvent(eventId: String!): Boolean!
+  removeFromFavorites(eventId: String!): Boolean!
   removeProfileAvatar: Boolean!
   removeSession(id: String!): Boolean!
   removeSocialLink(id: String!): Boolean!
@@ -222,7 +233,6 @@ enum PaymentType {
 }
 
 type Query {
-  events: [EventModel!]!
   findCurrentSession: SessionModel!
   findNotificationsByUser: [NotificationModel!]!
   findNotificationsUnreadCount: Float!
@@ -230,6 +240,13 @@ type Query {
   findSessionsByUser: [SessionModel!]!
   findSocialLinks: [SocialLinkModel!]!
   generateTotpSecret: TotpModel!
+  getAllEvents: [EventModel!]!
+  getEventById(id: String!): EventModel!
+  getEventsWhereIParticipate: [EventModel!]!
+
+  """Возвращает список избранных событий пользователя"""
+  getFavoriteEvents: [EventModel!]!
+  getMyOrganizedEvents: [EventModel!]!
 }
 
 input ResetPasswordInput {
