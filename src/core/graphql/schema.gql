@@ -170,7 +170,7 @@ type Mutation {
   changeProfileAvatar(avatar: Upload!): Boolean!
   changeProfileInfo(data: ChangeProfileInfoInput!): Boolean!
   clearSessionCookie: Boolean!
-  createEvent(input: CreateEventInput!): EventModel!
+  createEvent(input: CreateEventInput!, photos: [Upload!]): EventModel!
   createSocialLink(data: SocialLinkInput!): Boolean!
   createUser(data: CreateUserInput!): Boolean!
   deactivateAccount(data: DeactivateAccountInput!): AuthModel!

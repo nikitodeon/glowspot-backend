@@ -4,6 +4,8 @@ import {
 	NotFoundException
 } from '@nestjs/common'
 import axios from 'axios'
+import * as Upload from 'graphql-upload/Upload.js'
+import * as sharp from 'sharp'
 //   import { UpdateEventInput } from './inputs/update-event.input';
 //   import { EventStatus, EventType, PaymentType, User } from '@prisma/client';
 import * as wkt from 'wkt'
@@ -15,6 +17,8 @@ import {
 	PaymentType
 } from '@/prisma/generated'
 import { PrismaService } from '@/src/core/prisma/prisma.service'
+
+import { StorageService } from '../libs/storage/storage.service'
 
 import { CreateEventInput } from './inputs/create-event.input'
 import { EventModel } from './models/event.model'
@@ -54,7 +58,10 @@ type EventWithDetails = {
 
 @Injectable()
 export class EventsService {
-	constructor(private readonly prisma: PrismaService) {}
+	constructor(
+		private readonly prisma: PrismaService,
+		private readonly storageService: StorageService
+	) {}
 
 	async getAllEvents() {
 		try {
@@ -233,7 +240,11 @@ export class EventsService {
 		}
 	}
 
-	async createEvent(input: CreateEventInput, organizerId: string) {
+	async createEvent(
+		input: CreateEventInput,
+		organizerId: string,
+		photos?: Upload[]
+	) {
 		const { address, city, placeName, ...eventData } = input
 		const { longitude, latitude } = await this.geocodeAddress(address, city)
 
@@ -242,7 +253,7 @@ export class EventsService {
 		}
 
 		try {
-			// 1. Создаем локацию с помощью raw query
+			// 1. Create location
 			const locations = await this.prisma.$queryRaw<{ id: string }[]>`
 			INSERT INTO "locations" 
 			  (id, address, city, "place_name", coordinates, "created_at", "updated_at")
@@ -256,7 +267,7 @@ export class EventsService {
 			  NOW()
 			)
 			RETURNING id;
-		  `
+			`
 
 			if (!locations || locations.length === 0) {
 				throw new Error('Failed to create location')
@@ -264,13 +275,48 @@ export class EventsService {
 
 			const locationId = locations[0].id
 
+			// Process photos if provided
+			const photoPaths: string[] = []
+			if (photos && photos.length > 0) {
+				for (const photo of photos) {
+					const chunks: Buffer[] = []
+					for await (const chunk of photo.createReadStream()) {
+						chunks.push(chunk)
+					}
+					const buffer = Buffer.concat(chunks)
+
+					const fileName = `/events/${organizerId}/${Date.now()}-${Math.random().toString(36).substring(2, 9)}.webp`
+
+					const processedBuffer = await sharp(buffer)
+						.resize(1280, 720)
+						.webp()
+						.toBuffer()
+
+					await this.storageService.upload(
+						processedBuffer,
+						fileName,
+						'image/webp'
+					)
+
+					photoPaths.push(fileName)
+				}
+			}
+
+			// Фильтруем входные photoUrls, оставляя только те, что похожи на пути в хранилище
+			const filteredInputPaths = (eventData.photoUrls || []).filter(
+				path =>
+					path.startsWith('/events/') || path.startsWith('/users/')
+			)
+
+			const allPhotoPaths = [...photoPaths, ...filteredInputPaths]
+
 			const event = await this.prisma.event.create({
 				data: {
 					title: eventData.title,
 					description: eventData.description,
 					startTime: eventData.startTime,
 					endTime: eventData.endTime || null,
-					photoUrls: eventData.photoUrls || [],
+					photoUrls: allPhotoPaths, // Сохраняем только пути
 					eventType: eventData.eventType,
 					eventProperties: eventData.eventProperties || [],
 					paymentType: eventData.paymentType,
@@ -285,7 +331,7 @@ export class EventsService {
 					locationId,
 					organizerId,
 					participants: {
-						connect: { id: organizerId } // Организатор автоматически становится участником
+						connect: { id: organizerId }
 					}
 				},
 				include: {
@@ -301,7 +347,6 @@ export class EventsService {
 			throw new Error('Failed to create event')
 		}
 	}
-
 	async getEventById(id: string) {
 		try {
 			const events = await this.prisma.$queryRaw<EventWithDetails[]>`

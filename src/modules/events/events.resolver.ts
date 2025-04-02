@@ -8,6 +8,8 @@ import {
 	Resolver
 } from '@nestjs/graphql'
 import { User } from '@prisma/generated'
+import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js'
+import * as Upload from 'graphql-upload/Upload.js'
 
 import { Authorization } from '@/src/shared/decorators/auth.decorator'
 import { Authorized } from '@/src/shared/decorators/authorized.decorator'
@@ -32,9 +34,11 @@ export class EventsResolver {
 	@UseGuards(GqlAuthGuard)
 	async createEvent(
 		@Args('input') input: CreateEventInput,
+		@Args('photos', { type: () => [GraphQLUpload], nullable: true })
+		photos: Upload[],
 		@Authorized() user: User
 	) {
-		return this.eventsService.createEvent(input, user.id)
+		return this.eventsService.createEvent(input, user.id, photos)
 	}
 	@Query(() => EventModel, { name: 'getEventById' })
 	async getEventById(@Args('id') id: string) {
