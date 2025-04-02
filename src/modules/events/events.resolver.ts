@@ -35,10 +35,12 @@ export class EventsResolver {
 	async createEvent(
 		@Args('input') input: CreateEventInput,
 		@Args('photos', { type: () => [GraphQLUpload], nullable: true })
-		photos: Upload[],
+		photos: Promise<any>[], // Изменено на Promise<FileUpload>[]
 		@Authorized() user: User
 	) {
-		return this.eventsService.createEvent(input, user.id, photos)
+		// Дожидаемся разрешения всех промисов
+		const resolvedPhotos = await Promise.all(photos)
+		return this.eventsService.createEvent(input, user.id, resolvedPhotos)
 	}
 	@Query(() => EventModel, { name: 'getEventById' })
 	async getEventById(@Args('id') id: string) {

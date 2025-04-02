@@ -54,6 +54,12 @@ type EventWithDetails = {
 	username: string
 	display_name: string
 	avatar: string | null
+	participants: Array<{
+		id: string
+		username: string
+		display_name: string
+		avatar: string | null
+	}>
 }
 
 @Injectable()
@@ -243,7 +249,7 @@ export class EventsService {
 	async createEvent(
 		input: CreateEventInput,
 		organizerId: string,
-		photos?: Upload[]
+		photos?: any[]
 	) {
 		const { address, city, placeName, ...eventData } = input
 		const { longitude, latitude } = await this.geocodeAddress(address, city)
@@ -255,19 +261,19 @@ export class EventsService {
 		try {
 			// 1. Create location
 			const locations = await this.prisma.$queryRaw<{ id: string }[]>`
-			INSERT INTO "locations" 
-			  (id, address, city, "place_name", coordinates, "created_at", "updated_at")
-			VALUES (
-			  gen_random_uuid(),
-			  ${address || null}, 
-			  ${city || 'Minsk'}, 
-			  ${placeName || null}, 
-			  ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326),
-			  NOW(),
-			  NOW()
-			)
-			RETURNING id;
-			`
+		  INSERT INTO "locations" 
+			(id, address, city, "place_name", coordinates, "created_at", "updated_at")
+		  VALUES (
+			gen_random_uuid(),
+			${address || null}, 
+			${city || 'Minsk'}, 
+			${placeName || null}, 
+			ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326),
+			NOW(),
+			NOW()
+		  )
+		  RETURNING id;
+		  `
 
 			if (!locations || locations.length === 0) {
 				throw new Error('Failed to create location')
