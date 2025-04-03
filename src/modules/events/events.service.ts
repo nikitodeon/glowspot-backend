@@ -27,37 +27,43 @@ type EventWithDetails = {
 	id: string
 	title: string
 	description: string
-	start_time: Date
-	end_time: Date | null
-	photo_urls: string[]
+	startTime: Date
+	endTime: Date | null
+	photoUrls: string[]
 	eventType: EventType
 	eventProperties: EventProperty[]
 	paymentType: PaymentType
 	price: number | null
 	currency: string | null
-	posted_date: Date
-	is_verified: boolean
-	is_private: boolean
-	max_participants: number | null
+	postedDate: Date
+	isVerified: boolean
+	isPrivate: boolean
+	maxParticipants: number | null
 	tags: string[]
 	status: EventStatus
-	age_restriction: number | null
-	created_at: Date
-	updated_at: Date
-	location_id: string
-	address: string | null
-	city: string
-	place_name: string | null
-	longitude: number
-	latitude: number
-	organizer_id: string
-	username: string
-	display_name: string
-	avatar: string | null
+	ageRestriction: number | null
+	createdAt: Date
+	updatedAt: Date
+	location: {
+		id: string
+		address: string | null
+		city: string
+		placeName: string | null
+		coordinates: {
+			longitude: number
+			latitude: number
+		}
+	}
+	organizer: {
+		id: string
+		username: string
+		displayName: string
+		avatar: string | null
+	}
 	participants: Array<{
 		id: string
 		username: string
-		display_name: string
+		displayName: string
 		avatar: string | null
 	}>
 }
@@ -354,7 +360,12 @@ export class EventsService {
 		}
 	}
 	async getEventById(id: string) {
+		console.log('[EventsService] Starting getEventById for ID:', id)
+
 		try {
+			console.log('[EventsService] Executing SQL query...')
+			const queryStartTime = Date.now()
+
 			const events = await this.prisma.$queryRaw<EventWithDetails[]>`
 			SELECT 
 			  e.*,
@@ -366,27 +377,64 @@ export class EventsService {
 			  ST_Y(l.coordinates::geometry) as latitude,
 			  u.id as organizer_id,
 			  u.username,
-			  u.display_name,
-			  u.avatar
+			  u.display_name as organizer_display_name,
+			  u.avatar as organizer_avatar,
+			  (
+				SELECT json_agg(json_build_object(
+				  'id', p.id,
+				  'username', p.username,
+				  'displayName', p.display_name,  
+				  'avatar', p.avatar
+				))
+				FROM users p
+				JOIN "_EventParticipants" ep ON ep."B" = p.id
+				WHERE ep."A" = e.id
+			  ) as participants
 			FROM events e
 			JOIN locations l ON e."locationId" = l.id
 			JOIN users u ON e."organizerId" = u.id
 			WHERE e.id = ${id}
 		  `
 
+			const queryDuration = Date.now() - queryStartTime
+			console.log(
+				`[EventsService] SQL query completed in ${queryDuration}ms`
+			)
+			console.log(
+				'[EventsService] Query result:',
+				JSON.stringify(events, null, 2)
+			)
+
 			if (!events || events.length === 0) {
+				console.warn('[EventsService] Event not found for ID:', id)
 				throw new NotFoundException('Event not found')
 			}
 
-			const event = events[0]
-			return this.mapEventWithDetails(event)
+			console.log('[EventsService] Mapping event data...')
+			const mappedEvent = this.mapEventWithDetails(events[0])
+			console.log(
+				'[EventsService] Mapped event data:',
+				JSON.stringify(mappedEvent, null, 2)
+			)
+
+			return mappedEvent
 		} catch (error) {
-			console.error('Error fetching event:', error)
-			throw new Error('Failed to fetch event')
+			console.error('[EventsService] Error in getEventById:', {
+				error: error instanceof Error ? error.message : error,
+				stack: error instanceof Error ? error.stack : undefined,
+				timestamp: new Date().toISOString()
+			})
+
+			throw new Error(
+				'Failed to fetch event. See server logs for details.'
+			)
 		}
 	}
-	private mapEventWithDetails(event: EventWithDetails) {
-		return {
+
+	private mapEventWithDetails(event: any) {
+		console.log('[EventsService] Raw event data before mapping:', event)
+
+		const mappedData = {
 			id: event.id,
 			title: event.title,
 			description: event.description,
@@ -407,6 +455,13 @@ export class EventsService {
 			ageRestriction: event.age_restriction,
 			createdAt: event.created_at,
 			updatedAt: event.updated_at,
+			participants:
+				event.participants?.map((p: any) => ({
+					id: p.id,
+					username: p.username,
+					displayName: p.displayName || p.display_name, // Добавлена обработка обоих вариантов
+					avatar: p.avatar
+				})) || [],
 			location: {
 				id: event.location_id,
 				address: event.address,
@@ -420,17 +475,46 @@ export class EventsService {
 			organizer: {
 				id: event.organizer_id,
 				username: event.username,
-				displayName: event.display_name,
-				avatar: event.avatar
+				displayName: event.organizer_display_name || event.display_name, // Добавлена обработка
+				avatar: event.organizer_avatar || event.avatar
 			}
 		}
-	}
 
+		console.log('[EventsService] Mapped event data:', mappedData)
+		return mappedData
+	}
 	async getEventsByOrganizer(organizerId: string) {
+		console.log(
+			'[EventsService] Starting getEventsByOrganizer for organizer ID:',
+			organizerId
+		)
+
 		try {
+			console.log('[EventsService] Executing SQL query...')
+			const queryStartTime = Date.now()
+
 			const events = await this.prisma.$queryRaw<EventWithDetails[]>`
 			SELECT 
-			  e.*,
+			  e.id,
+			  e.title,
+			  e.description,
+			  e.start_time,
+			  e.end_time,
+			  e.photo_urls,
+			  e."eventType",
+			  e."eventProperties",
+			  e."paymentType",
+			  e.price,
+			  e.currency,
+			  e.posted_date,
+			  e.is_verified,
+			  e.is_private,
+			  e.max_participants,
+			  e.tags,
+			  e.status,
+			  e.age_restriction,
+			  e.created_at,
+			  e.updated_at,
 			  l.id as location_id,
 			  l.address,
 			  l.city,
@@ -439,8 +523,20 @@ export class EventsService {
 			  ST_Y(l.coordinates::geometry) as latitude,
 			  u.id as organizer_id,
 			  u.username,
-			  u.display_name,
-			  u.avatar
+			  u.display_name as organizer_display_name,
+			  u.avatar as organizer_avatar,
+			 
+			  (
+				SELECT json_agg(json_build_object(
+				  'id', p.id,
+				  'username', p.username,
+				  'display_name', p.display_name,
+				  'avatar', p.avatar
+				))
+				FROM users p
+				JOIN "_EventParticipants" ep ON ep."B" = p.id
+				WHERE ep."A" = e.id
+			  ) as participants
 			FROM events e
 			JOIN locations l ON e."locationId" = l.id
 			JOIN users u ON e."organizerId" = u.id
@@ -448,10 +544,80 @@ export class EventsService {
 			ORDER BY e.start_time ASC
 		  `
 
-			return events.map(event => this.mapEventWithDetails(event))
+			const queryDuration = Date.now() - queryStartTime
+			console.log(
+				`[EventsService] SQL query completed in ${queryDuration}ms`
+			)
+
+			// Безопасное логирование с обработкой BigInt
+			console.log('[EventsService] Query result count:', events?.length)
+			if (events?.length > 0) {
+				console.log('[EventsService] First event sample:', {
+					id: events[0].id,
+					max_participants: events[0].maxParticipants?.toString()
+				})
+			}
+
+			if (!events || events.length === 0) {
+				console.warn(
+					'[EventsService] No events found for organizer ID:',
+					organizerId
+				)
+				return []
+			}
+
+			console.log('[EventsService] Mapping events data...')
+			const mappedEvents = events
+				.map(event => {
+					try {
+						// Преобразование BigInt в строку для безопасного логирования
+						const eventForLog = {
+							...event,
+							max_participants: event.maxParticipants?.toString()
+						}
+
+						console.log(
+							'[EventsService] Mapping event:',
+							eventForLog
+						)
+
+						const mappedEvent = this.mapEventWithDetails(event)
+
+						console.log('[EventsService] Mapped event:', {
+							id: mappedEvent.id,
+							maxParticipants:
+								mappedEvent.maxParticipants?.toString(),
+							participantsCount:
+								mappedEvent.participants?.length || 0
+						})
+
+						return mappedEvent
+					} catch (error) {
+						console.error('[EventsService] Error mapping event:', {
+							eventId: event?.id,
+							error:
+								error instanceof Error ? error.message : error
+						})
+						return null
+					}
+				})
+				.filter(event => event !== null)
+
+			console.log(
+				'[EventsService] Successfully mapped',
+				mappedEvents.length,
+				'events'
+			)
+			return mappedEvents
 		} catch (error) {
-			console.error('Error fetching organizer events:', error)
-			throw new Error('Failed to fetch organizer events')
+			console.error('[EventsService] Error in getEventsByOrganizer:', {
+				error: error instanceof Error ? error.message : error,
+				stack: error instanceof Error ? error.stack : undefined,
+				timestamp: new Date().toISOString()
+			})
+			throw new Error(
+				'Failed to fetch organizer events. See server logs for details.'
+			)
 		}
 	}
 
