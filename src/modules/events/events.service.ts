@@ -77,16 +77,16 @@ export class EventsService {
 
 	async getAllEvents() {
 		try {
-			type EventWithLocation = {
+			type EventWithDetails = {
 				id: string
 				title: string
 				description: string
 				start_time: Date
 				end_time: Date | null
 				photo_urls: string[]
-				eventType: EventType // Обратите внимание - camelCase
-				eventProperties: EventProperty[] // camelCase
-				paymentType: PaymentType // camelCase
+				eventType: EventType
+				eventProperties: EventProperty[]
+				paymentType: PaymentType
 				price: number | null
 				currency: string | null
 				posted_date: Date
@@ -98,13 +98,13 @@ export class EventsService {
 				age_restriction: number | null
 				created_at: Date
 				updated_at: Date
-				locationId: string // camelCase
+				location_id: string
 				address: string | null
 				city: string
 				place_name: string | null
 				longitude: number
 				latitude: number
-				organizerId: string // camelCase
+				organizer_id: string
 				username: string
 				display_name: string
 				avatar: string | null
@@ -114,56 +114,43 @@ export class EventsService {
 					display_name: string
 					avatar: string | null
 				}>
+				favorited_by: Array<{ id: string }> | null
 			}
 
-			const events = await this.prisma.$queryRaw<EventWithLocation[]>`
+			const events = await this.prisma.$queryRaw<EventWithDetails[]>`
 			SELECT 
-			  e.id,
-			  e.title,
-			  e.description,
-			  e.start_time,
-			  e.end_time,
-			  e.photo_urls,
-			  e."eventType" as "eventType",
-			  e."eventProperties" as "eventProperties",
-			  e."paymentType" as "paymentType",
-			  e.price,
-			  e.currency,
-			  e.posted_date,
-			  e.is_verified,
-			  e.is_private,
-			  e.max_participants,
-			  e.tags,
-			  e.status,
-			  e.age_restriction,
-			  e.created_at,
-			  e.updated_at,
-			  l.id as "locationId",
+			  e.*,
+			  l.id AS location_id,
 			  l.address,
 			  l.city,
 			  l.place_name,
-			  ST_X(l.coordinates::geometry) as longitude,
-			  ST_Y(l.coordinates::geometry) as latitude,
-			  u.id as "organizerId",
+			  ST_X(l.coordinates::geometry) AS longitude,
+			  ST_Y(l.coordinates::geometry) AS latitude,
+			  u.id AS organizer_id,
 			  u.username,
 			  u.display_name,
 			  u.avatar,
 			  (
-          SELECT json_agg(json_build_object(
-            'id', p.id,
-            'username', p.username,
-            'display_name', p.display_name,
-            'avatar', p.avatar
-          ))
-          FROM "_EventParticipants" ep
-          JOIN "users" p ON ep."B" = p.id
-          WHERE ep."A" = e.id
-        ) as participants
+				SELECT json_agg(json_build_object(
+				  'id', p.id,
+				  'username', p.username,
+				  'display_name', p.display_name,
+				  'avatar', p.avatar
+				))
+				FROM "_EventParticipants" ep
+				JOIN "users" p ON ep."B" = p.id
+				WHERE ep."A" = e.id
+			  ) AS participants,
+			  (
+				SELECT json_agg(json_build_object(
+				  'id', f."B"
+				))
+				FROM "_FavoriteProperties" f
+				WHERE f."A" = e.id
+			  ) AS favorited_by
 			FROM "events" e
 			JOIN "locations" l ON e."locationId" = l.id
 			JOIN "users" u ON e."organizerId" = u.id
-			
-			WHERE e.is_private = false
 			ORDER BY e.start_time ASC
 		  `
 
@@ -174,9 +161,9 @@ export class EventsService {
 				startTime: event.start_time,
 				endTime: event.end_time,
 				photoUrls: event.photo_urls,
-				eventType: event.eventType, // Без преобразования
-				eventProperties: event.eventProperties, // Без преобразования
-				paymentType: event.paymentType, // Без преобразования
+				eventType: event.eventType,
+				eventProperties: event.eventProperties,
+				paymentType: event.paymentType,
 				price: event.price,
 				currency: event.currency,
 				postedDate: event.posted_date,
@@ -189,19 +176,17 @@ export class EventsService {
 				createdAt: event.created_at,
 				updatedAt: event.updated_at,
 				location: {
-					id: event.locationId, // Без преобразования
+					id: event.location_id,
 					address: event.address,
 					city: event.city,
 					placeName: event.place_name,
 					coordinates: {
 						longitude: event.longitude,
 						latitude: event.latitude
-					},
-					createdAt: event.created_at,
-					updatedAt: event.updated_at
+					}
 				},
 				organizer: {
-					id: event.organizerId, // Без преобразования
+					id: event.organizer_id,
 					username: event.username,
 					displayName: event.display_name,
 					avatar: event.avatar
@@ -213,11 +198,14 @@ export class EventsService {
 							displayName: p.display_name,
 							avatar: p.avatar
 						}))
+					: [],
+				favoritedBy: event.favorited_by
+					? event.favorited_by.map(f => ({ id: f.id }))
 					: []
 			}))
 		} catch (error) {
-			console.error('Error fetching events:', error)
-			throw new Error('Failed to fetch events')
+			console.error('Error fetching all events:', error)
+			throw new Error('Failed to fetch all events')
 		}
 	}
 	private async geocodeAddress(
@@ -359,50 +347,114 @@ export class EventsService {
 			throw new Error('Failed to create event')
 		}
 	}
-	async getEventById(id: string) {
+
+	async deleteEvent(eventId: string, userId: string) {
+		try {
+			// 1. Проверяем существует ли мероприятие и является ли пользователь организатором
+			const event = await this.prisma.event.findUnique({
+				where: { id: eventId },
+				select: { organizerId: true, photoUrls: true }
+			})
+
+			if (!event) {
+				throw new Error('Event not found')
+			}
+
+			if (event.organizerId !== userId) {
+				throw new Error('You are not the organizer of this event')
+			}
+
+			// 2. Удаляем фотографии из хранилища
+			if (event.photoUrls && event.photoUrls.length > 0) {
+				await Promise.all(
+					event.photoUrls.map(photoUrl =>
+						this.storageService
+							.remove(photoUrl)
+							.catch(e =>
+								console.error('Failed to delete photo:', e)
+							)
+					)
+				)
+			}
+
+			// 3. Удаляем мероприятие из базы данных
+			await this.prisma.event.delete({
+				where: { id: eventId }
+			})
+
+			return true
+		} catch (err) {
+			console.error('Error deleting event:', err)
+			throw new Error('Failed to delete event')
+		}
+	}
+	async getEventById(id: string): Promise<EventWithDetails> {
 		console.log('[EventsService] Starting getEventById for ID:', id)
 
 		try {
 			console.log('[EventsService] Executing SQL query...')
 			const queryStartTime = Date.now()
 
+			// Полный SQL запрос с явными проверками
 			const events = await this.prisma.$queryRaw<EventWithDetails[]>`
-			SELECT 
-			  e.*,
-			  l.id as location_id,
-			  l.address,
-			  l.city,
-			  l.place_name,
-			  ST_X(l.coordinates::geometry) as longitude,
-			  ST_Y(l.coordinates::geometry) as latitude,
-			  u.id as organizer_id,
-			  u.username,
-			  u.display_name as organizer_display_name,
-			  u.avatar as organizer_avatar,
-			  (
-				SELECT json_agg(json_build_object(
-				  'id', p.id,
-				  'username', p.username,
-				  'displayName', p.display_name,  
-				  'avatar', p.avatar
-				))
-				FROM users p
-				JOIN "_EventParticipants" ep ON ep."B" = p.id
-				WHERE ep."A" = e.id
-			  ) as participants
-			FROM events e
-			JOIN locations l ON e."locationId" = l.id
-			JOIN users u ON e."organizerId" = u.id
-			WHERE e.id = ${id}
-		  `
+				SELECT 
+					e.id,
+					e.title,
+					e.description,
+					e.start_time,
+					e.end_time,
+					e.photo_urls,
+					e."eventType",
+					e."eventProperties",
+					e."paymentType",
+					e.price,
+					e.currency,
+					e.posted_date,
+					e.is_verified,
+					e.is_private,
+					e.max_participants,
+					e.tags,
+					e.status,
+					e.age_restriction,
+					e.created_at,
+					e.updated_at,
+					l.id as location_id,
+					l.address,
+					l.city,
+					l.place_name,
+					ST_X(l.coordinates::geometry) as longitude,
+					ST_Y(l.coordinates::geometry) as latitude,
+					u.id as organizer_id,
+					u.username as username,
+					u.display_name as display_name,
+					u.avatar as organizer_avatar,
+					(
+						SELECT json_agg(json_build_object(
+							'id', p.id,
+							'username', p.username,
+							'displayName', COALESCE(p.display_name, p.username),
+							'avatar', p.avatar
+						))
+						FROM users p
+						JOIN "_EventParticipants" ep ON ep."B" = p.id
+						WHERE ep."A" = e.id
+					) as participants,
+					(
+						SELECT json_agg(json_build_object(
+							'id', f."B"
+						))
+						FROM "_FavoriteProperties" f
+						WHERE f."A" = e.id
+					) AS favorited_by
+				FROM events e
+				JOIN locations l ON e."locationId" = l.id
+				JOIN users u ON e."organizerId" = u.id
+				WHERE e.id = ${id}
+			`
 
 			const queryDuration = Date.now() - queryStartTime
 			console.log(
 				`[EventsService] SQL query completed in ${queryDuration}ms`
-			)
-			console.log(
-				'[EventsService] Query result:',
-				JSON.stringify(events, null, 2)
 			)
 
 			if (!events || events.length === 0) {
@@ -410,12 +462,31 @@ export class EventsService {
 				throw new NotFoundException('Event not found')
 			}
 
-			console.log('[EventsService] Mapping event data...')
-			const mappedEvent = this.mapEventWithDetails(events[0])
+			// Детальное логирование перед маппингом
 			console.log(
-				'[EventsService] Mapped event data:',
-				JSON.stringify(mappedEvent, null, 2)
+				'[EventsService] Raw SQL result:',
+				JSON.stringify(
+					events[0],
+					(key, value) => {
+						if (value === null) return 'NULL_VALUE'
+						return value
+					},
+					2
+				)
 			)
+
+			console.log('[EventsService] Mapping event data...')
+			const mappedEvent = this.mapEventWithDetailsForEventById(events[0])
+
+			// Валидация результата
+			this.validateEventWithDetails(mappedEvent)
+
+			console.log('[EventsService] Mapped event data:', {
+				id: mappedEvent.id,
+				title: mappedEvent.title,
+				organizer: mappedEvent.organizer.username,
+				participantsCount: mappedEvent.participants?.length || 0
+			})
 
 			return mappedEvent
 		} catch (error) {
@@ -431,6 +502,111 @@ export class EventsService {
 		}
 	}
 
+	private validateEventWithDetails(event: EventWithDetails): void {
+		if (!event.organizer.username) {
+			throw new Error(
+				`Organizer username is missing for event ${event.id}`
+			)
+		}
+
+		if (!event.organizer.displayName) {
+			throw new Error(
+				`Organizer displayName is missing for event ${event.id}`
+			)
+		}
+
+		event.participants?.forEach(participant => {
+			if (!participant.username) {
+				throw new Error(
+					`Participant username is missing in event ${event.id}`
+				)
+			}
+			if (!participant.displayName) {
+				throw new Error(
+					`Participant displayName is missing in event ${event.id}`
+				)
+			}
+		})
+	}
+
+	private mapEventWithDetailsForEventById(event: any): EventWithDetails {
+		console.log('[EventsService] Raw event data before mapping:', event)
+
+		// Проверка организатора
+		if (!event.username) {
+			console.error('Organizer username is missing:', {
+				organizerId: event.organizer_id,
+				rawUsername: event.username
+			})
+			throw new Error('Organizer username is required')
+		}
+
+		// Проверка участников
+		if (event.participants) {
+			event.participants.forEach((p: any) => {
+				if (!p.username) {
+					console.error('Participant username is missing:', {
+						participantId: p.id,
+						rawUsername: p.username
+					})
+					throw new Error('Participant username is required')
+				}
+			})
+		}
+
+		const mappedData = {
+			id: event.id,
+			title: event.title,
+			description: event.description,
+			startTime: event.start_time,
+			endTime: event.end_time,
+			photoUrls: event.photo_urls,
+			eventType: event.eventType,
+			eventProperties: event.eventProperties,
+			paymentType: event.paymentType,
+			price: event.price,
+			currency: event.currency,
+			postedDate: event.posted_date,
+			isVerified: event.is_verified,
+			isPrivate: event.is_private,
+			maxParticipants: event.max_participants,
+			tags: event.tags,
+			status: event.status,
+			ageRestriction: event.age_restriction,
+			createdAt: event.created_at,
+			updatedAt: event.updated_at,
+			location: {
+				id: event.location_id,
+				address: event.address,
+				city: event.city,
+				placeName: event.place_name,
+				coordinates: {
+					longitude: event.longitude,
+					latitude: event.latitude
+				}
+			},
+			organizer: {
+				id: event.organizer_id,
+				username: event.username,
+				displayName: event.display_name || event.username,
+				avatar: event.organizer_avatar
+			},
+			participants: event.participants
+				? event.participants.map((p: any) => ({
+						id: p.id,
+						username: p.username,
+						displayName: p.displayName || p.username,
+						avatar: p.avatar
+					}))
+				: [],
+			favoritedBy: event.favorited_by
+				? event.favorited_by.map((f: any) => ({ id: f.id }))
+				: []
+		}
+
+		console.log('[EventsService] Mapped event data:', mappedData)
+		return mappedData
+	}
 	private mapEventWithDetails(event: any) {
 		console.log('[EventsService] Raw event data before mapping:', event)
 
@@ -455,13 +631,6 @@ export class EventsService {
 			ageRestriction: event.age_restriction,
 			createdAt: event.created_at,
 			updatedAt: event.updated_at,
-			participants:
-				event.participants?.map((p: any) => ({
-					id: p.id,
-					username: p.username,
-					displayName: p.displayName || p.display_name, // Добавлена обработка обоих вариантов
-					avatar: p.avatar
-				})) || [],
 			location: {
 				id: event.location_id,
 				address: event.address,
@@ -475,9 +644,20 @@ export class EventsService {
 			organizer: {
 				id: event.organizer_id,
 				username: event.username,
-				displayName: event.organizer_display_name || event.display_name, // Добавлена обработка
-				avatar: event.organizer_avatar || event.avatar
-			}
+				displayName: event.display_name,
+				avatar: event.avatar
+			},
+			participants: event.participants
+				? event.participants.map(p => ({
+						id: p.id,
+						username: p.username,
+						displayName: p.display_name,
+						avatar: p.avatar
+					}))
+				: [],
+			favoritedBy: event.favorited_by
+				? event.favorited_by.map(f => ({ id: f.id }))
+				: []
 		}
 
 		console.log('[EventsService] Mapped event data:', mappedData)
@@ -525,7 +705,6 @@ export class EventsService {
 			  u.username,
 			  u.display_name as organizer_display_name,
 			  u.avatar as organizer_avatar,
-			 
 			  (
 				SELECT json_agg(json_build_object(
 				  'id', p.id,
@@ -536,7 +715,14 @@ export class EventsService {
 				FROM users p
 				JOIN "_EventParticipants" ep ON ep."B" = p.id
 				WHERE ep."A" = e.id
-			  ) as participants
+			  ) as participants,
+			  (
+				SELECT json_agg(json_build_object(
+				  'id', f."B"
+				))
+				FROM "_FavoriteProperties" f
+				WHERE f."A" = e.id
+			  ) AS favorited_by
 			FROM events e
 			JOIN locations l ON e."locationId" = l.id
 			JOIN users u ON e."organizerId" = u.id
@@ -549,7 +735,6 @@ export class EventsService {
 				`[EventsService] SQL query completed in ${queryDuration}ms`
 			)
 
-			// Безопасное логирование с обработкой BigInt
 			console.log('[EventsService] Query result count:', events?.length)
 			if (events?.length > 0) {
 				console.log('[EventsService] First event sample:', {
@@ -702,39 +887,47 @@ export class EventsService {
 					display_name: string
 					avatar: string | null
 				}>
+				favorited_by: Array<{ id: string }> | null
 			}
 
 			const events = await this.prisma.$queryRaw<EventWithDetails[]>`
 			SELECT 
-			  e.*,
-			  l.id as location_id,
-			  l.address,
-			  l.city,
-			  l.place_name,
-			  ST_X(l.coordinates::geometry) as longitude,
-			  ST_Y(l.coordinates::geometry) as latitude,
-			  u.id as organizer_id,
-			  u.username,
-			  u.display_name,
-			  u.avatar,
-			  (
-          SELECT json_agg(json_build_object(
-            'id', p.id,
-            'username', p.username,
-            'display_name', p.display_name,
-            'avatar', p.avatar
-          ))
-          FROM "_EventParticipants" ep
-          JOIN "users" p ON ep."B" = p.id
-          WHERE ep."A" = e.id
-        ) as participants
+				e.*,
+				l.id AS location_id,
+				l.address,
+				l.city,
+				l.place_name,
+				ST_X(l.coordinates::geometry) AS longitude,
+				ST_Y(l.coordinates::geometry) AS latitude,
+				u.id AS organizer_id,
+				u.username,
+				u.display_name,
+				u.avatar,
+				(
+					SELECT json_agg(json_build_object(
+						'id', p.id,
+						'username', p.username,
+						'display_name', p.display_name,
+						'avatar', p.avatar
+					))
+					FROM "_EventParticipants" ep
+					JOIN "users" p ON ep."B" = p.id
+					WHERE ep."A" = e.id
+				) AS participants,
+				(
+	SELECT json_agg(json_build_object(
+		'id', f."B"
+	))
+	FROM "_FavoriteProperties" f
+	WHERE f."A" = e.id
+) AS favorited_by
 			FROM "events" e
 			JOIN "locations" l ON e."locationId" = l.id
 			JOIN "users" u ON e."organizerId" = u.id
 			JOIN "_EventParticipants" ep ON e.id = ep."A"
 			WHERE ep."B" = ${userId}
 			ORDER BY e.start_time ASC
-		  `
+			`
 
 			return events.map(event => ({
 				id: event.id,
@@ -780,6 +973,9 @@ export class EventsService {
 							displayName: p.display_name,
 							avatar: p.avatar
 						}))
+					: [],
+				favoritedBy: event.favorited_by
+					? event.favorited_by.map(f => ({ id: f.id }))
 					: []
 			}))
 		} catch (error) {
@@ -787,18 +983,16 @@ export class EventsService {
 			throw new Error('Failed to fetch events where I participate')
 		}
 	}
-	async addToFavorites(eventId: string, userId: string) {
+
+	async addToFavorites(eventId: string, userId: string): Promise<boolean> {
 		try {
-			// Проверяем, что событие существует
+			// Проверяем существование события
 			const event = await this.prisma.event.findUnique({
 				where: { id: eventId }
 			})
+			if (!event) throw new NotFoundException('Event not found')
 
-			if (!event) {
-				throw new NotFoundException('Event not found')
-			}
-
-			// Проверяем, что событие еще не в избранном
+			// Проверяем, не добавлено ли уже в избранное
 			const existingFavorite = await this.prisma.user.findFirst({
 				where: {
 					id: userId,
@@ -813,11 +1007,7 @@ export class EventsService {
 			// Добавляем в избранное
 			await this.prisma.user.update({
 				where: { id: userId },
-				data: {
-					favorites: {
-						connect: { id: eventId }
-					}
-				}
+				data: { favorites: { connect: { id: eventId } } }
 			})
 
 			return true
@@ -827,18 +1017,18 @@ export class EventsService {
 		}
 	}
 
-	async removeFromFavorites(eventId: string, userId: string) {
+	async removeFromFavorites(
+		eventId: string,
+		userId: string
+	): Promise<boolean> {
 		try {
-			// Проверяем, что событие существует
+			// Проверяем существование события
 			const event = await this.prisma.event.findUnique({
 				where: { id: eventId }
 			})
+			if (!event) throw new NotFoundException('Event not found')
 
-			if (!event) {
-				throw new NotFoundException('Event not found')
-			}
-
-			// Проверяем, что событие в избранном
+			// Проверяем, есть ли в избранном
 			const existingFavorite = await this.prisma.user.findFirst({
 				where: {
 					id: userId,
@@ -853,11 +1043,7 @@ export class EventsService {
 			// Удаляем из избранного
 			await this.prisma.user.update({
 				where: { id: userId },
-				data: {
-					favorites: {
-						disconnect: { id: eventId }
-					}
-				}
+				data: { favorites: { disconnect: { id: eventId } } }
 			})
 
 			return true
@@ -867,251 +1053,139 @@ export class EventsService {
 		}
 	}
 
-	async getFavoriteEvents(userId: string): Promise<any> {
-		console.log(
-			`[${new Date().toISOString()}] [getFavoriteEvents] Начало выполнения для пользователя ${userId}`
-		)
-
+	async getFavoriteEvents(userId: string) {
 		try {
-			// 1. Проверка существования пользователя
-			console.log(
-				`[${new Date().toISOString()}] [getFavoriteEvents] Проверяем существование пользователя ${userId}`
-			)
-			const userExists = await this.prisma.user.findUnique({
-				where: { id: userId },
-				select: { id: true }
-			})
-
-			if (!userExists) {
-				console.error(
-					`[${new Date().toISOString()}] [getFavoriteEvents] Пользователь ${userId} не найден!`
-				)
-				throw new NotFoundException(`User with id ${userId} not found`)
-			}
-			console.log(
-				`[${new Date().toISOString()}] [getFavoriteEvents] Пользователь ${userId} существует`
-			)
-
-			// 2. Получаем список избранных событий
-			console.log(
-				`[${new Date().toISOString()}] [getFavoriteEvents] Получаем избранные события пользователя ${userId}`
-			)
-			const userWithFavorites = await this.prisma.user.findUnique({
-				where: { id: userId },
-				include: {
-					favorites: {
-						select: {
-							id: true,
-							title: true,
-							startTime: true
-						}
-					}
-				}
-			})
-
-			const favoritesCount = userWithFavorites?.favorites.length
-			console.log(
-				`[${new Date().toISOString()}] [getFavoriteEvents] Найдено ${favoritesCount} избранных событий`
-			)
-
-			if (favoritesCount === 0) {
-				console.log(
-					`[${new Date().toISOString()}] [getFavoriteEvents] Нет избранных событий, возвращаем пустой массив`
-				)
-				return []
-			}
-
-			// 3. Формируем список ID избранных событий
-			const favoriteIds = userWithFavorites?.favorites.map(f => f.id)
-			console.log(
-				`[${new Date().toISOString()}] [getFavoriteEvents] ID избранных событий: ${favoriteIds?.join(', ')}`
-			)
-
-			// 4. Определяем тип для результата запроса
-			type RawEventResult = {
+			type EventWithDetails = {
 				id: string
 				title: string
 				description: string
-				startTime: Date
-				endTime: Date | null
-				photoUrls: string[]
+				start_time: Date
+				end_time: Date | null
+				photo_urls: string[]
 				eventType: EventType
 				eventProperties: EventProperty[]
 				paymentType: PaymentType
 				price: number | null
 				currency: string | null
-				postedDate: Date
-				isVerified: boolean
-				isPrivate: boolean
-				maxParticipants: number | null
+				posted_date: Date
+				is_verified: boolean
+				is_private: boolean
+				max_participants: number | null
 				tags: string[]
 				status: EventStatus
-				ageRestriction: number | null
-				createdAt: Date
-				updatedAt: Date
-				locationId: string
+				age_restriction: number | null
+				created_at: Date
+				updated_at: Date
+				location_id: string
 				address: string | null
 				city: string
-				placeName: string | null
+				place_name: string | null
 				longitude: number
 				latitude: number
-				organizerId: string
+				organizer_id: string
 				username: string
-				displayName: string
+				display_name: string
 				avatar: string | null
 				participants: Array<{
 					id: string
 					username: string
-					displayName: string
+					display_name: string
 					avatar: string | null
-				}> | null
+				}>
+				favorited_by: Array<{ id: string }> | null
 			}
 
-			// 5. Выполняем основной запрос
-			console.log(
-				`[${new Date().toISOString()}] [getFavoriteEvents] Выполняем запрос к базе данных...`
-			)
-			const rawEvents = await this.prisma.$queryRaw<RawEventResult[]>`
+			const events = await this.prisma.$queryRaw<EventWithDetails[]>`
 			SELECT 
-			  e.id,
-			  e.title,
-			  e.description,
-			  e.start_time as "startTime",
-			  e.end_time as "endTime",
-			  e.photo_urls as "photoUrls",
-			  e."eventType",
-			  e."eventProperties",
-			  e."paymentType",
-			  e.price,
-			  e.currency,
-			  e.posted_date as "postedDate",
-			  e.is_verified as "isVerified",
-			  e.is_private as "isPrivate",
-			  e.max_participants as "maxParticipants",
-			  e.tags,
-			  e.status,
-			  e.age_restriction as "ageRestriction",
-			  e.created_at as "createdAt",
-			  e.updated_at as "updatedAt",
-			  l.id as "locationId",
-			  l.address,
-			  l.city,
-			  l.place_name as "placeName",
-			  ST_X(l.coordinates::geometry) as longitude,
-			  ST_Y(l.coordinates::geometry) as latitude,
-			  u.id as "organizerId",
-			  u.username,
-			  u.display_name as "displayName",
-			  u.avatar,
-			  COALESCE((
-				SELECT json_agg(json_build_object(
-				  'id', p.id,
-				  'username', p.username,
-				  'displayName', p.display_name,
-				  'avatar', p.avatar
-				))
-				FROM "_EventParticipants" ep
-				JOIN "users" p ON ep."B" = p.id
-				WHERE ep."A" = e.id
-			  ), '[]'::json) as participants
+				e.*,
+				l.id AS location_id,
+				l.address,
+				l.city,
+				l.place_name,
+				ST_X(l.coordinates::geometry) AS longitude,
+				ST_Y(l.coordinates::geometry) AS latitude,
+				u.id AS organizer_id,
+				u.username,
+				u.display_name,
+				u.avatar,
+				(
+					SELECT json_agg(json_build_object(
+						'id', p.id,
+						'username', p.username,
+						'display_name', p.display_name,
+						'avatar', p.avatar
+					))
+					FROM "_EventParticipants" ep
+					JOIN "users" p ON ep."B" = p.id
+					WHERE ep."A" = e.id
+				) AS participants,
+				(
+					SELECT json_agg(json_build_object(
+						'id', f."B"
+					))
+					FROM "_FavoriteProperties" f
+					WHERE f."A" = e.id
+				) AS favorited_by
 			FROM "events" e
-			INNER JOIN "locations" l ON e."locationId" = l.id
-			INNER JOIN "users" u ON e."organizerId" = u.id
-			WHERE e.id IN (${favoriteIds?.join("','")})
+			JOIN "locations" l ON e."locationId" = l.id
+			JOIN "users" u ON e."organizerId" = u.id
+			JOIN "_FavoriteProperties" fp ON e.id = fp."A"
+			WHERE fp."B" = ${userId}
 			ORDER BY e.start_time ASC
-		  `
-			console.log(
-				`[${new Date().toISOString()}] [getFavoriteEvents] Получено ${rawEvents.length} событий из базы`
-			)
+			`
 
-			// 6. Преобразуем данные в нужный формат
-			console.log(
-				`[${new Date().toISOString()}] [getFavoriteEvents] Начинаем преобразование данных...`
-			)
-			const resultEvents = rawEvents.map((event, index) => {
-				console.log(
-					`[${new Date().toISOString()}] [getFavoriteEvents] Обрабатываем событие ${index + 1}/${rawEvents.length} (ID: ${event.id})`
-				)
-
-				// Валидация обязательных полей
-				if (!event.startTime) {
-					console.error(
-						`[${new Date().toISOString()}] [getFavoriteEvents] Ошибка: событие ${event.id} не имеет startTime!`
-					)
-					throw new Error(`Event ${event.id} has no startTime`)
-				}
-
-				if (!event.locationId) {
-					console.error(
-						`[${new Date().toISOString()}] [getFavoriteEvents] Ошибка: событие ${event.id} не имеет locationId!`
-					)
-					throw new Error(`Event ${event.id} has no locationId`)
-				}
-
-				const result = {
-					id: event.id,
-					title: event.title,
-					description: event.description,
-					startTime: event.startTime,
-					endTime: event.endTime,
-					photoUrls: event.photoUrls,
-					eventType: event.eventType,
-					eventProperties: event.eventProperties,
-					paymentType: event.paymentType,
-					price: event.price,
-					currency: event.currency,
-					postedDate: event.postedDate,
-					isVerified: event.isVerified,
-					isPrivate: event.isPrivate,
-					maxParticipants: event.maxParticipants,
-					tags: event.tags,
-					status: event.status,
-					ageRestriction: event.ageRestriction,
-					createdAt: event.createdAt,
-					updatedAt: event.updatedAt,
-					location: {
-						id: event.locationId,
-						address: event.address,
-						city: event.city,
-						placeName: event.placeName,
-						coordinates: {
-							longitude: event.longitude,
-							latitude: event.latitude
-						}
-					},
-					organizer: {
-						id: event.organizerId,
-						username: event.username,
-						displayName: event.displayName,
-						avatar: event.avatar
-					},
-					participants: event.participants || []
-				}
-
-				console.log(
-					`[${new Date().toISOString()}] [getFavoriteEvents] Событие ${event.id} успешно обработано`
-				)
-				return result
-			})
-
-			console.log(
-				`[${new Date().toISOString()}] [getFavoriteEvents] Все события успешно обработаны`
-			)
-			console.log(
-				`[${new Date().toISOString()}] [getFavoriteEvents] Возвращаем ${resultEvents.length} событий`
-			)
-
-			return resultEvents
+			return events.map(event => ({
+				id: event.id,
+				title: event.title,
+				description: event.description,
+				startTime: event.start_time,
+				endTime: event.end_time,
+				photoUrls: event.photo_urls,
+				eventType: event.eventType,
+				eventProperties: event.eventProperties,
+				paymentType: event.paymentType,
+				price: event.price,
+				currency: event.currency,
+				postedDate: event.posted_date,
+				isVerified: event.is_verified,
+				isPrivate: event.is_private,
+				maxParticipants: event.max_participants,
+				tags: event.tags,
+				status: event.status,
+				ageRestriction: event.age_restriction,
+				createdAt: event.created_at,
+				updatedAt: event.updated_at,
+				location: {
+					id: event.location_id,
+					address: event.address,
+					city: event.city,
+					placeName: event.place_name,
+					coordinates: {
+						longitude: event.longitude,
+						latitude: event.latitude
+					}
+				},
+				organizer: {
+					id: event.organizer_id,
+					username: event.username,
+					displayName: event.display_name,
+					avatar: event.avatar
+				},
+				participants: event.participants
+					? event.participants.map(p => ({
+							id: p.id,
+							username: p.username,
+							displayName: p.display_name,
+							avatar: p.avatar
+						}))
+					: [],
+				favoritedBy: event.favorited_by
+					? event.favorited_by.map(f => ({ id: f.id }))
+					: []
+			}))
 		} catch (error) {
-			console.error(
-				`[${new Date().toISOString()}] [getFavoriteEvents] КРИТИЧЕСКАЯ ОШИБКА:`,
-				{
-					error: error.message,
-					stack: error.stack,
-					userId
-				}
-			)
-			throw new Error('Не удалось получить избранные события')
+			console.error('Error fetching events user favorited:', error)
+			throw new Error('Failed to fetch events user favorited')
 		}
 	}
 }

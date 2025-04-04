@@ -24,8 +24,10 @@ import { EventModel } from './models/event.model'
 export class EventsResolver {
 	constructor(private readonly eventsService: EventsService) {}
 
+	@Authorization()
 	@Query(() => [EventModel], { name: 'getAllEvents' })
-	async getAllEvents() {
+	@UseGuards(GqlAuthGuard)
+	async getAllEvents(@Authorized() user: User) {
 		return this.eventsService.getAllEvents()
 	}
 
@@ -45,6 +47,13 @@ export class EventsResolver {
 	@Query(() => EventModel, { name: 'getEventById' })
 	async getEventById(@Args('id') id: string) {
 		return this.eventsService.getEventById(id)
+	}
+
+	@Authorization()
+	@Mutation(() => Boolean)
+	@UseGuards(GqlAuthGuard)
+	async deleteEvent(@Args('id') id: string, @Authorized() user: User) {
+		return this.eventsService.deleteEvent(id, user.id)
 	}
 
 	@Authorization()
@@ -75,8 +84,21 @@ export class EventsResolver {
 	async addToFavorites(
 		@Args('eventId') eventId: string,
 		@Authorized() user: User
-	) {
-		return this.eventsService.addToFavorites(eventId, user.id)
+	): Promise<boolean> {
+		console.log(`User ${user.id} is adding event ${eventId} to favorites`)
+		try {
+			const result = await this.eventsService.addToFavorites(
+				eventId,
+				user.id
+			)
+			console.log(
+				`Event ${eventId} added to favorites by user ${user.id}: ${result}`
+			)
+			return result
+		} catch (error) {
+			console.error('Error adding event to favorites:', error)
+			throw error
+		}
 	}
 
 	@Authorization()
@@ -85,8 +107,23 @@ export class EventsResolver {
 	async removeFromFavorites(
 		@Args('eventId') eventId: string,
 		@Authorized() user: User
-	) {
-		return this.eventsService.removeFromFavorites(eventId, user.id)
+	): Promise<boolean> {
+		console.log(
+			`User ${user.id} is removing event ${eventId} from favorites`
+		)
+		try {
+			const result = await this.eventsService.removeFromFavorites(
+				eventId,
+				user.id
+			)
+			console.log(
+				`Event ${eventId} removed from favorites by user ${user.id}: ${result}`
+			)
+			return result
+		} catch (error) {
+			console.error('Error removing event from favorites:', error)
+			throw error
+		}
 	}
 
 	@Authorization()
