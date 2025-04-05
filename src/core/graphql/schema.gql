@@ -85,6 +85,20 @@ input EnableTotpInput {
   secret: String!
 }
 
+input EventFilterInput {
+  ageRestriction: Float
+  dateRange: [String!]
+  eventProperties: [EventProperty!]
+  eventType: EventType
+  isVerified: Boolean
+  location: String
+  organizerId: String
+  paymentType: PaymentType
+  priceRange: [Float!]
+  searchQuery: String
+  status: EventStatus
+}
+
 type EventModel {
   ageRestriction: Float
   createdAt: DateTime!
@@ -241,7 +255,7 @@ type Query {
   findSessionsByUser: [SessionModel!]!
   findSocialLinks: [SocialLinkModel!]!
   generateTotpSecret: TotpModel!
-  getAllEvents: [EventModel!]!
+  getAllEvents(filter: EventFilterInput): [EventModel!]!
   getEventById(id: String!): EventModel!
   getEventsWhereIParticipate: [EventModel!]!
 

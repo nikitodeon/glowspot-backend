@@ -14,14 +14,18 @@ import {
 	EventProperty,
 	EventStatus,
 	EventType,
-	PaymentType
+	PaymentType,
+	Prisma
 } from '@/prisma/generated'
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 import { PrismaService } from '@/src/core/prisma/prisma.service'
 
 import { StorageService } from '../libs/storage/storage.service'
 
 import { CreateEventInput } from './inputs/create-event.input'
 import { EventModel } from './models/event.model'
+
+// import { Prisma } from '@prisma/client'
 
 type EventWithDetails = {
 	id: string
@@ -75,7 +79,16 @@ export class EventsService {
 		private readonly storageService: StorageService
 	) {}
 
-	async getAllEvents() {
+	async getAllEvents(filter?: {
+		location?: string
+		eventType?: string
+		priceRange?: [number, number]
+		eventProperties?: string[]
+		status?: string
+		paymentType?: string
+		dateRange?: [string, string]
+		searchQuery?: string
+	}) {
 		try {
 			type EventWithDetails = {
 				id: string
@@ -117,42 +130,157 @@ export class EventsService {
 				favorited_by: Array<{ id: string }> | null
 			}
 
-			const events = await this.prisma.$queryRaw<EventWithDetails[]>`
-			SELECT 
-			  e.*,
-			  l.id AS location_id,
-			  l.address,
-			  l.city,
-			  l.place_name,
-			  ST_X(l.coordinates::geometry) AS longitude,
-			  ST_Y(l.coordinates::geometry) AS latitude,
-			  u.id AS organizer_id,
-			  u.username,
-			  u.display_name,
-			  u.avatar,
-			  (
-				SELECT json_agg(json_build_object(
-				  'id', p.id,
-				  'username', p.username,
-				  'display_name', p.display_name,
-				  'avatar', p.avatar
-				))
-				FROM "_EventParticipants" ep
-				JOIN "users" p ON ep."B" = p.id
-				WHERE ep."A" = e.id
-			  ) AS participants,
-			  (
-				SELECT json_agg(json_build_object(
-				  'id', f."B"
-				))
-				FROM "_FavoriteProperties" f
-				WHERE f."A" = e.id
-			  ) AS favorited_by
-			FROM "events" e
-			JOIN "locations" l ON e."locationId" = l.id
-			JOIN "users" u ON e."organizerId" = u.id
-			ORDER BY e.start_time ASC
-		  `
+			const whereConditions: string[] = []
+			const queryParams: any[] = []
+
+			// Вспомогательная функция для добавления условий
+			const addCondition = (condition: string, ...params: any[]) => {
+				whereConditions.push(condition)
+				queryParams.push(...params)
+			}
+
+			// Фильтр по местоположению
+			if (filter?.location) {
+				addCondition(
+					`(l.city ILIKE $${whereConditions.length + 1} OR l.address ILIKE $${whereConditions.length + 1})`,
+					`%${filter.location}%`
+				)
+			}
+
+			// Фильтр по типу события
+			if (filter?.eventType) {
+				addCondition(
+					`e."eventType"::text = $${whereConditions.length + 1}`,
+					filter.eventType
+				)
+			}
+
+			// Фильтр по цене
+			if (filter?.priceRange?.length === 2) {
+				const [min, max] = filter.priceRange
+
+				if (min === 0) {
+					// Включаем и бесплатные (paymentType = 'FREE')
+					if (max != null) {
+						addCondition(
+							`(e.price BETWEEN $${whereConditions.length + 1} AND $${whereConditions.length + 2} OR e."paymentType" = 'FREE')`,
+							min,
+							max
+						)
+					} else {
+						addCondition(
+							`(e.price >= $${whereConditions.length + 1} OR e."paymentType" = 'FREE')`,
+							min
+						)
+					}
+				} else if (min != null && max != null) {
+					addCondition(
+						`e.price BETWEEN $${whereConditions.length + 1} AND $${whereConditions.length + 2}`,
+						min,
+						max
+					)
+				} else if (min != null) {
+					addCondition(
+						`e.price >= $${whereConditions.length + 1}`,
+						min
+					)
+				} else if (max != null) {
+					addCondition(
+						`(e.price <= $${whereConditions.length + 1} OR e.price IS NULL)`,
+						max
+					)
+				}
+			}
+			// Фильтр по свойствам события
+			if (filter?.eventProperties?.length) {
+				// Convert to PostgreSQL array format
+				const pgArray = `{${filter.eventProperties.map(p => `"${p}"`).join(',')}}`
+				addCondition(
+					`e."eventProperties" @> $${whereConditions.length + 1}::text[]`,
+					pgArray
+				)
+			}
+
+			// Фильтр по статусу
+			if (filter?.status) {
+				addCondition(
+					`e."status"::text = $${whereConditions.length + 1}`,
+					filter.status
+				)
+			}
+
+			// Фильтр по типу оплаты
+			if (filter?.paymentType) {
+				addCondition(
+					`e."paymentType"::text = $${whereConditions.length + 1}`,
+					filter.paymentType
+				)
+			}
+
+			// Фильтр по дате
+			if (filter?.dateRange && filter.dateRange.length === 2) {
+				addCondition(
+					`e.start_time BETWEEN $${whereConditions.length + 1} AND $${whereConditions.length + 2}`,
+					new Date(filter.dateRange[0]),
+					new Date(filter.dateRange[1])
+				)
+			}
+
+			// Поиск по тексту
+			if (filter?.searchQuery) {
+				addCondition(
+					`(e.title ILIKE $${whereConditions.length + 1} OR e.description ILIKE $${whereConditions.length + 1})`,
+					`%${filter.searchQuery}%`
+				)
+			}
+
+			// Собираем полный запрос
+			const whereClause =
+				whereConditions.length > 0
+					? `WHERE ${whereConditions.join(' AND ')}`
+					: ''
+
+			const query = `
+			  SELECT 
+				e.*,
+				l.id AS location_id,
+				l.address,
+				l.city,
+				l.place_name,
+				ST_X(l.coordinates::geometry) AS longitude,
+				ST_Y(l.coordinates::geometry) AS latitude,
+				u.id AS organizer_id,
+				u.username,
+				u.display_name,
+				u.avatar,
+				(
+				  SELECT json_agg(json_build_object(
+					'id', p.id,
+					'username', p.username,
+					'display_name', p.display_name,
+					'avatar', p.avatar
+				  ))
+				  FROM "_EventParticipants" ep
+				  JOIN "users" p ON ep."B" = p.id
+				  WHERE ep."A" = e.id
+				) AS participants,
+				(
+				  SELECT json_agg(json_build_object(
+					'id', f."B"
+				  ))
+				  FROM "_FavoriteProperties" f
+  WHERE f."A" = e.id
+) AS favorited_by
+			  FROM "events" e
+			  JOIN "locations" l ON e."locationId" = l.id
+			  JOIN "users" u ON e."organizerId" = u.id
+			  ${whereConditions.length > 0 ? 'WHERE ' + whereConditions.join(' AND ') : ''}
+			  ORDER BY e.start_time ASC
+			`
+
+			const events = await this.prisma.$queryRawUnsafe<
+				EventWithDetails[]
+			>(query, ...queryParams)
 
 			return events.map(event => ({
 				id: event.id,

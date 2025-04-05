@@ -17,6 +17,7 @@ import { GqlAuthGuard } from '@/src/shared/guards/gql-auth.guard'
 
 import { EventsService } from './events.service'
 import { CreateEventInput } from './inputs/create-event.input'
+import { EventFilterInput } from './inputs/event-filter.input'
 // import { UpdateEventInput } from './inputs/update-event.input';
 import { EventModel } from './models/event.model'
 
@@ -24,11 +25,13 @@ import { EventModel } from './models/event.model'
 export class EventsResolver {
 	constructor(private readonly eventsService: EventsService) {}
 
-	@Authorization()
 	@Query(() => [EventModel], { name: 'getAllEvents' })
 	@UseGuards(GqlAuthGuard)
-	async getAllEvents(@Authorized() user: User) {
-		return this.eventsService.getAllEvents()
+	async getAllEvents(
+		@Args('filter', { type: () => EventFilterInput, nullable: true })
+		filter?: EventFilterInput
+	) {
+		return this.eventsService.getAllEvents(filter)
 	}
 
 	@Authorization()
