@@ -87,6 +87,7 @@ input EnableTotpInput {
 
 input EventFilterInput {
   ageRestriction: Float
+  currency: String
   dateRange: [String!]
   eventProperties: [EventProperty!]
   eventType: EventType
@@ -148,16 +149,23 @@ enum EventStatus {
 }
 
 enum EventType {
+  BOOK_CLUB
   CONCERT
+  CYBERSPORT
+  DANCE
   EXHIBITION
   FESTIVAL
+  KARAOKE
+  KIDS_EVENT
   LECTURE
   MEETUP
+  MOVIE
   OTHER
   PARTY
   SPORT
+  STANDUP
+  THEATRE
   WALK
-  WORKSHOP
 }
 
 type LocationModel {

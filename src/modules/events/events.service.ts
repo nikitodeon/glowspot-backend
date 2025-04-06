@@ -88,6 +88,7 @@ export class EventsService {
 		paymentType?: string
 		dateRange?: [string, string]
 		searchQuery?: string
+		currency?: string
 	}) {
 		try {
 			type EventWithDetails = {
@@ -231,6 +232,12 @@ export class EventsService {
 				addCondition(
 					`(e.title ILIKE $${whereConditions.length + 1} OR e.description ILIKE $${whereConditions.length + 1})`,
 					`%${filter.searchQuery}%`
+				)
+			}
+			if (filter?.currency) {
+				addCondition(
+					`e.currency = $${whereConditions.length + 1}`,
+					filter.currency
 				)
 			}
 

@@ -40,4 +40,7 @@ export class EventFilterInput {
 
 	@Field({ nullable: true })
 	ageRestriction?: number
+
+	@Field({ nullable: true })
+	currency?: string
 }

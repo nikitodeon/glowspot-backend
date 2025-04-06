@@ -231,8 +231,17 @@ enum EventType {
   SPORT
   FESTIVAL
   LECTURE
-  WORKSHOP
+  // WORKSHOP
   OTHER
+  MOVIE
+  THEATRE
+  // TOUR = 'Экскурсия',
+  STANDUP
+  DANCE
+  BOOK_CLUB
+  KARAOKE
+  CYBERSPORT
+  KIDS_EVENT
 
   @@map("event_types")
 }

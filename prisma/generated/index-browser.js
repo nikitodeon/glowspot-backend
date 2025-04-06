@@ -255,8 +255,15 @@ exports.EventType = exports.$Enums.EventType = {
   SPORT: 'SPORT',
   FESTIVAL: 'FESTIVAL',
   LECTURE: 'LECTURE',
-  WORKSHOP: 'WORKSHOP',
-  OTHER: 'OTHER'
+  OTHER: 'OTHER',
+  MOVIE: 'MOVIE',
+  THEATRE: 'THEATRE',
+  STANDUP: 'STANDUP',
+  DANCE: 'DANCE',
+  BOOK_CLUB: 'BOOK_CLUB',
+  KARAOKE: 'KARAOKE',
+  CYBERSPORT: 'CYBERSPORT',
+  KIDS_EVENT: 'KIDS_EVENT'
 };
 
 exports.PaymentType = exports.$Enums.PaymentType = {
