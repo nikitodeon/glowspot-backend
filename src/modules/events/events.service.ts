@@ -86,7 +86,7 @@ export class EventsService {
 		eventProperties?: string[]
 		status?: string
 		paymentType?: string
-		dateRange?: [string, string]
+		dateRange?: [string | null, string | null]
 		searchQuery?: string
 		currency?: string
 	}) {
@@ -218,15 +218,6 @@ export class EventsService {
 				)
 			}
 
-			// Фильтр по дате
-			if (filter?.dateRange && filter.dateRange.length === 2) {
-				addCondition(
-					`e.start_time BETWEEN $${whereConditions.length + 1} AND $${whereConditions.length + 2}`,
-					new Date(filter.dateRange[0]),
-					new Date(filter.dateRange[1])
-				)
-			}
-
 			// Поиск по тексту
 			if (filter?.searchQuery) {
 				addCondition(
@@ -240,7 +231,119 @@ export class EventsService {
 					filter.currency
 				)
 			}
+			if (filter?.dateRange) {
+				const [startDate, endDate] = filter.dateRange
 
+				console.log('📆 Raw dateRange:', { startDate, endDate })
+
+				// Полная версия функции валидации даты с преобразованием в PostgreSQL-совместимый формат
+				const parseAndValidateDate = (
+					label: string,
+					raw: string | null | undefined
+				): string | null => {
+					// Явная проверка на null и undefined
+					if (raw === null || raw === undefined) {
+						console.log(
+							`🔄 ${label} is null or undefined, skipping`
+						)
+						return null
+					}
+
+					// Явная проверка на пустую строку
+					if (raw.trim() === '') {
+						console.log(`⚠️ ${label} is empty string, skipping`)
+						return null
+					}
+
+					const date = new Date(raw)
+					console.log(`🔍 Parsed ${label}:`, date)
+
+					// Подробная проверка валидности даты
+					if (isNaN(date.getTime())) {
+						console.error(`❌ Invalid ${label}:`, raw)
+						throw new Error(`Invalid ${label}: ${raw}`)
+					}
+
+					// Преобразуем дату в формат, который PostgreSQL понимает как timestamp
+					return date.toISOString().replace('T', ' ').replace('Z', '')
+				}
+
+				// Парсинг дат с полной обработкой ошибок
+				let pgStart: string | null = null
+				let pgEnd: string | null = null
+
+				try {
+					pgStart = parseAndValidateDate('startDate', startDate)
+					pgEnd = parseAndValidateDate('endDate', endDate)
+				} catch (error) {
+					console.error('🚨 Error parsing dates:', error)
+					throw error
+				}
+
+				// Явное преобразование null в undefined для addCondition
+				const convertForQuery = (
+					date: string | null
+				): string | undefined => {
+					if (date === null) {
+						return undefined
+					}
+					return date
+				}
+
+				const pgStartValid = convertForQuery(pgStart)
+				const pgEndValid = convertForQuery(pgEnd)
+
+				// Полная версия обработки всех возможных комбинаций дат с явным приведением типов в SQL
+				if (pgStartValid !== undefined && pgEndValid === undefined) {
+					console.log('📌 Filtering by startDate only:', pgStartValid)
+					addCondition(
+						`(
+							e.start_time >= ($${whereConditions.length + 1}::timestamp) OR 
+							(e.start_time <= ($${whereConditions.length + 1}::timestamp) AND 
+							(e.end_time IS NULL OR e.end_time >= ($${whereConditions.length + 1}::timestamp))
+						)`,
+						pgStartValid
+					)
+				} else if (
+					pgStartValid === undefined &&
+					pgEndValid !== undefined
+				) {
+					console.log('📌 Filtering by endDate only:', pgEndValid)
+					addCondition(
+						`(
+							(e.start_time <= ($${whereConditions.length + 1}::timestamp) AND 
+							(e.end_time IS NULL OR e.end_time >= ($${whereConditions.length + 1}::timestamp)))
+							OR
+							(e.end_time IS NOT NULL AND e.end_time <= ($${whereConditions.length + 1}::timestamp))
+						)`,
+						pgEndValid
+					)
+				} else if (
+					pgStartValid !== undefined &&
+					pgEndValid !== undefined
+				) {
+					console.log(
+						'📌 Filtering between startDate and endDate:',
+						pgStartValid,
+						pgEndValid
+					)
+					addCondition(
+						`(
+							(e.start_time >= ($${whereConditions.length + 1}::timestamp) AND e.end_time <= ($${whereConditions.length + 2}::timestamp)) OR
+							(e.start_time <= ($${whereConditions.length + 1}::timestamp) AND (e.end_time IS NULL OR e.end_time >= ($${whereConditions.length + 2}::timestamp))) OR
+							(e.start_time <= ($${whereConditions.length + 1}::timestamp) AND e.end_time >= ($${whereConditions.length + 1}::timestamp)) OR
+							(e.start_time >= ($${whereConditions.length + 1}::timestamp) AND e.start_time <= ($${whereConditions.length + 2}::timestamp) AND 
+							(e.end_time IS NULL OR e.end_time >= ($${whereConditions.length + 1}::timestamp)))
+						)`,
+						pgStartValid,
+						pgEndValid
+					)
+				} else {
+					console.log(
+						'ℹ️ No valid date range provided, skipping date filtering'
+					)
+				}
+			}
 			// Собираем полный запрос
 			const whereClause =
 				whereConditions.length > 0

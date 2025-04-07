@@ -26,8 +26,8 @@ export class EventFilterInput {
 	@Field(() => PaymentType, { nullable: true })
 	paymentType?: PaymentType
 
-	@Field(() => [String], { nullable: true })
-	dateRange?: [string, string]
+	@Field(() => [String], { nullable: 'itemsAndList' })
+	dateRange?: [string | null, string | null]
 
 	@Field({ nullable: true })
 	searchQuery?: string
