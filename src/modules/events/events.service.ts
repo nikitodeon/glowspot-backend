@@ -134,166 +134,210 @@ export class EventsService {
 			const whereConditions: string[] = []
 			const queryParams: any[] = []
 
-			// Вспомогательная функция для добавления условий
 			const addCondition = (condition: string, ...params: any[]) => {
 				whereConditions.push(condition)
 				queryParams.push(...params)
 			}
 
+			// Счетчик параметров для правильной нумерации
+			let paramCounter = 1
+
 			// Фильтр по местоположению
 			if (filter?.location) {
 				addCondition(
-					`(l.city ILIKE $${whereConditions.length + 1} OR l.address ILIKE $${whereConditions.length + 1})`,
+					`(l.city ILIKE $${paramCounter} OR l.address ILIKE $${paramCounter})`,
 					`%${filter.location}%`
 				)
+				paramCounter++
 			}
 
 			// Фильтр по типу события
 			if (filter?.eventType) {
 				addCondition(
-					`e."eventType"::text = $${whereConditions.length + 1}`,
+					`e."eventType"::text = $${paramCounter}`,
 					filter.eventType
 				)
+				paramCounter++
 			}
 
-			// Фильтр по цене
+			// Фильтр по цене и валюте
 			if (filter?.priceRange?.length === 2) {
-				const [min, max] = filter.priceRange
+				const [min, max] = filter.priceRange.map(val =>
+					val === null ? undefined : val
+				)
 
-				if (min === 0) {
-					// Включаем и бесплатные (paymentType = 'FREE')
-					if (max != null) {
-						addCondition(
-							`(e.price BETWEEN $${whereConditions.length + 1} AND $${whereConditions.length + 2} OR e."paymentType" = 'FREE')`,
-							min,
-							max
-						)
+				if (filter.currency && filter.currency !== 'any') {
+					// Сценарий с валютой
+					if (min === 0) {
+						if (max !== undefined) {
+							addCondition(
+								`((e.price BETWEEN $${paramCounter} AND $${paramCounter + 1} AND e.currency = $${paramCounter + 2}::text) OR e."paymentType" = 'FREE')`,
+								min,
+								max,
+								filter.currency
+							)
+							paramCounter += 3
+						} else {
+							addCondition(
+								`((e.price >= $${paramCounter} AND e.currency = $${paramCounter + 1}::text) OR e."paymentType" = 'FREE')`,
+								min,
+								filter.currency
+							)
+							paramCounter += 2
+						}
 					} else {
-						addCondition(
-							`(e.price >= $${whereConditions.length + 1} OR e."paymentType" = 'FREE')`,
-							min
-						)
+						if (min !== undefined && max !== undefined) {
+							addCondition(
+								`e.price BETWEEN $${paramCounter} AND $${paramCounter + 1} AND e.currency = $${paramCounter + 2}::text`,
+								min,
+								max,
+								filter.currency
+							)
+							paramCounter += 3
+						} else if (min !== undefined) {
+							addCondition(
+								`e.price >= $${paramCounter} AND e.currency = $${paramCounter + 1}::text`,
+								min,
+								filter.currency
+							)
+							paramCounter += 2
+						} else if (max !== undefined) {
+							addCondition(
+								`e.price <= $${paramCounter} AND e.currency = $${paramCounter + 1}::text`,
+								max,
+								filter.currency
+							)
+							paramCounter += 2
+						}
 					}
-				} else if (min != null && max != null) {
-					addCondition(
-						`e.price BETWEEN $${whereConditions.length + 1} AND $${whereConditions.length + 2}`,
-						min,
-						max
-					)
-				} else if (min != null) {
-					addCondition(
-						`e.price >= $${whereConditions.length + 1}`,
-						min
-					)
-				} else if (max != null) {
-					addCondition(
-						`(e.price <= $${whereConditions.length + 1} OR e.price IS NULL)`,
-						max
-					)
+				} else {
+					// Сценарий без валюты
+					if (min === 0) {
+						if (max !== undefined) {
+							addCondition(
+								`(e.price BETWEEN $${paramCounter} AND $${paramCounter + 1} OR e."paymentType" = 'FREE')`,
+								min,
+								max
+							)
+							paramCounter += 2
+						} else {
+							addCondition(
+								`(e.price >= $${paramCounter} OR e."paymentType" = 'FREE')`,
+								min
+							)
+							paramCounter++
+						}
+					} else {
+						if (min !== undefined && max !== undefined) {
+							addCondition(
+								`e.price BETWEEN $${paramCounter} AND $${paramCounter + 1}`,
+								min,
+								max
+							)
+							paramCounter += 2
+						} else if (min !== undefined) {
+							addCondition(`e.price >= $${paramCounter}`, min)
+							paramCounter++
+						} else if (max !== undefined) {
+							addCondition(`e.price <= $${paramCounter}`, max)
+							paramCounter++
+						}
+					}
 				}
 			}
+
+			// Отдельный фильтр по валюте (если не указан priceRange)
+			if (
+				filter?.currency &&
+				filter.currency !== 'any' &&
+				(!filter.priceRange || filter.priceRange.every(v => v === null))
+			) {
+				addCondition(
+					`(e.currency = $${paramCounter}::text OR e."paymentType" = 'FREE')`,
+					filter.currency
+				)
+				paramCounter++
+			}
+
 			// Фильтр по свойствам события
 			if (filter?.eventProperties?.length) {
-				// Convert to PostgreSQL array format
 				const pgArray = `{${filter.eventProperties.map(p => `"${p}"`).join(',')}}`
 				addCondition(
-					`e."eventProperties" @> $${whereConditions.length + 1}::text[]`,
+					`e."eventProperties" @> $${paramCounter}::text[]`,
 					pgArray
 				)
+				paramCounter++
 			}
 
 			// Фильтр по статусу
-			if (filter?.status) {
+			if (filter?.status && filter.status !== 'any') {
 				addCondition(
-					`e."status"::text = $${whereConditions.length + 1}`,
+					`e."status"::text = $${paramCounter}`,
 					filter.status
 				)
+				paramCounter++
 			}
 
 			// Фильтр по типу оплаты
 			if (filter?.paymentType) {
 				addCondition(
-					`e."paymentType"::text = $${whereConditions.length + 1}`,
+					`e."paymentType"::text = $${paramCounter}`,
 					filter.paymentType
 				)
+				paramCounter++
 			}
 
 			// Поиск по тексту
 			if (filter?.searchQuery) {
 				addCondition(
-					`(e.title ILIKE $${whereConditions.length + 1} OR e.description ILIKE $${whereConditions.length + 1})`,
+					`(e.title ILIKE $${paramCounter} OR e.description ILIKE $${paramCounter})`,
 					`%${filter.searchQuery}%`
 				)
+				paramCounter++
 			}
-			if (filter?.currency) {
-				addCondition(
-					`e.currency = $${whereConditions.length + 1}`,
-					filter.currency
-				)
-			}
+
+			// Фильтр по дате
 			if (filter?.dateRange) {
-				console.log(
-					'[SERVER] Received filter.dateRange:',
-					filter.dateRange
-				)
 				const [startDate, endDate] = filter.dateRange
 
-				// Обработка случая, когда указана ТОЛЬКО начальная дата
 				if (startDate && !endDate) {
 					const startDateObj = new Date(startDate)
-					console.log('Parsed Dates:', startDateObj)
 					addCondition(
 						`(
-					 
-					  (e.start_time >= $${whereConditions.length + 1}) OR
-					 
-					  (e.start_time <= $${whereConditions.length + 1} AND 
-					   (e.end_time IS NULL OR e.end_time >= $${whereConditions.length + 1}))
+					  (e.start_time >= $${paramCounter}) OR
+					  (e.start_time <= $${paramCounter} AND 
+					   (e.end_time IS NULL OR e.end_time >= $${paramCounter}))
 					)`,
 						startDateObj
 					)
-				}
-				// Обработка случая, когда указана ТОЛЬКО конечная дата
-				else if (!startDate && endDate) {
+					paramCounter++
+				} else if (!startDate && endDate) {
 					const endDateObj = new Date(endDate)
-					console.log('Parsed Dates:', endDateObj)
-
 					addCondition(
 						`(
-							
-							(e.start_time <= $${whereConditions.length + 1} AND e.end_time IS NULL) OR
-							
-							(e.start_time <= $${whereConditions.length + 1} AND e.end_time IS NOT NULL AND 
-							 (e.end_time <= $${whereConditions.length + 1} OR e.end_time >= $${whereConditions.length + 1}))
-						)`,
+					  (e.start_time <= $${paramCounter} AND e.end_time IS NULL) OR
+					  (e.start_time <= $${paramCounter} AND e.end_time IS NOT NULL AND 
+					   (e.end_time <= $${paramCounter} OR e.end_time >= $${paramCounter}))
+					)`,
 						endDateObj
 					)
-				}
-				// Обработка случая, когда указаны ОБЕ даты
-				else if (startDate && endDate) {
+					paramCounter++
+				} else if (startDate && endDate) {
 					const startDateObj = new Date(startDate)
 					const endDateObj = new Date(endDate)
 					addCondition(
 						`(
-					
-					  (e.start_time >= $${whereConditions.length + 1} AND 
-					   e.end_time <= $${whereConditions.length + 2}) OR
-					  
-					  
-					  (e.start_time <= $${whereConditions.length + 1} AND 
-					   (e.end_time IS NULL OR e.end_time >= $${whereConditions.length + 2})) OR
-					  
-					  
-					  (e.start_time <= $${whereConditions.length + 1} AND 
-					   e.end_time >= $${whereConditions.length + 1}) OR
-					
-					  (e.start_time >= $${whereConditions.length + 1} AND 
-					   e.start_time <= $${whereConditions.length + 2} AND 
-					   (e.end_time IS NULL OR e.end_time >= $${whereConditions.length + 1}))
+					  (e.start_time >= $${paramCounter} AND e.end_time <= $${paramCounter + 1}) OR
+					  (e.start_time <= $${paramCounter} AND 
+					   (e.end_time IS NULL OR e.end_time >= $${paramCounter + 1})) OR
+					  (e.start_time <= $${paramCounter} AND e.end_time >= $${paramCounter}) OR
+					  (e.start_time >= $${paramCounter} AND e.start_time <= $${paramCounter + 1} AND 
+					   (e.end_time IS NULL OR e.end_time >= $${paramCounter}))
 					)`,
 						startDateObj,
 						endDateObj
 					)
+					paramCounter += 2
 				}
 			}
 			// Собираем полный запрос
