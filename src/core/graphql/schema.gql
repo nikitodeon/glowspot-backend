@@ -209,6 +209,7 @@ type Mutation {
   removeSocialLink(id: String!): Boolean!
   reorderSocialLinks(list: [SocialLinkOrderInput!]!): Boolean!
   resetPassword(data: ResetPasswordInput!): Boolean!
+  updateEvent(id: String!, input: UpdateEventInput!, photos: [Upload!]): EventModel!
   updateSocialLink(data: SocialLinkInput!, id: String!): Boolean!
   verifyAccount(data: VerificationInput!): AuthModel!
 }
@@ -312,6 +313,26 @@ input SocialLinkOrderInput {
 type TotpModel {
   qrcodeUrl: String!
   secret: String!
+}
+
+input UpdateEventInput {
+  address: String!
+  ageRestriction: Float
+  city: String
+  currency: String
+  description: String!
+  endTime: DateTime
+  eventProperties: [EventProperty!]!
+  eventType: EventType!
+  isPrivate: Boolean!
+  maxParticipants: Float
+  paymentType: PaymentType!
+  photoUrls: [String!]!
+  placeName: String
+  price: Float
+  startTime: DateTime!
+  tags: [String!]!
+  title: String!
 }
 
 """The `Upload` scalar type represents a file upload."""

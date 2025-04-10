@@ -18,6 +18,7 @@ import { GqlAuthGuard } from '@/src/shared/guards/gql-auth.guard'
 import { EventsService } from './events.service'
 import { CreateEventInput } from './inputs/create-event.input'
 import { EventFilterInput } from './inputs/event-filter.input'
+import { UpdateEventInput } from './inputs/update-event.input'
 // import { UpdateEventInput } from './inputs/update-event.input';
 import { EventModel } from './models/event.model'
 
@@ -47,6 +48,25 @@ export class EventsResolver {
 		const resolvedPhotos = await Promise.all(photos)
 		return this.eventsService.createEvent(input, user.id, resolvedPhotos)
 	}
+	@Authorization()
+	@Mutation(() => EventModel)
+	@UseGuards(GqlAuthGuard)
+	async updateEvent(
+		@Args('id') id: string,
+		@Args('input') input: UpdateEventInput,
+		@Args('photos', { type: () => [GraphQLUpload], nullable: true })
+		photos: Promise<any>[],
+		@Authorized() user: User
+	) {
+		const resolvedPhotos = await Promise.all(photos)
+		return this.eventsService.updateEvent(
+			id,
+			input,
+			user.id,
+			resolvedPhotos
+		)
+	}
+
 	@Query(() => EventModel, { name: 'getEventById' })
 	async getEventById(@Args('id') id: string) {
 		return this.eventsService.getEventById(id)

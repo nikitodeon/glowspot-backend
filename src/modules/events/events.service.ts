@@ -581,7 +581,122 @@ export class EventsService {
 			throw new Error('Failed to create event')
 		}
 	}
+	async updateEvent(
+		id: string,
+		input: CreateEventInput,
+		organizerId: string,
+		photos?: any[]
+	) {
+		const { address, city, placeName, ...eventData } = input
+		const event = await this.prisma.event.findUnique({
+			where: { id },
+			include: { location: true }
+		})
 
+		if (!event) {
+			throw new Error('Event not found')
+		}
+		if (event.organizerId !== organizerId) {
+			throw new Error('Unauthorized to update this event')
+		}
+
+		let locationId = event.locationId
+		// Обновляем или создаем новую локацию, если адрес изменился
+		if (
+			address !== event.location?.address ||
+			city !== event.location?.city ||
+			placeName !== event.location?.placeName
+		) {
+			const { longitude, latitude } = await this.geocodeAddress(
+				address,
+				city
+			)
+
+			if (longitude === 0 || latitude === 0) {
+				throw new Error('Geocoding failed')
+			}
+
+			const locations = await this.prisma.$queryRaw<{ id: string }[]>`
+			INSERT INTO "locations" 
+			(id, address, city, "place_name", coordinates, "created_at", "updated_at")
+			VALUES (
+				gen_random_uuid(),
+				${address || null}, 
+				${city || 'Minsk'}, 
+				${placeName || null}, 
+				ST_SetSRID(ST_MakePoint(${longitude}, ${latitude}), 4326),
+				NOW(),
+				NOW()
+			)
+			RETURNING id;
+			`
+
+			if (!locations || locations.length === 0) {
+				throw new Error('Failed to create location')
+			}
+			locationId = locations[0].id
+		}
+
+		// Обработка новых фото
+		const photoPaths: string[] = []
+		if (photos && photos.length > 0) {
+			for (const photo of photos) {
+				const chunks: Buffer[] = []
+				for await (const chunk of photo.createReadStream()) {
+					chunks.push(chunk)
+				}
+				const buffer = Buffer.concat(chunks)
+
+				const fileName = `/events/${organizerId}/${Date.now()}-${Math.random().toString(36).substring(2, 9)}.webp`
+
+				const processedBuffer = await sharp(buffer)
+					.resize(1280, 720)
+					.webp()
+					.toBuffer()
+
+				await this.storageService.upload(
+					processedBuffer,
+					fileName,
+					'image/webp'
+				)
+
+				photoPaths.push(fileName)
+			}
+		}
+
+		const filteredInputPaths = (eventData.photoUrls || []).filter(
+			path => path.startsWith('/events/') || path.startsWith('/users/')
+		)
+		const allPhotoPaths = [...photoPaths, ...filteredInputPaths]
+
+		const updated = await this.prisma.event.update({
+			where: { id },
+			data: {
+				title: eventData.title,
+				description: eventData.description,
+				startTime: eventData.startTime,
+				endTime: eventData.endTime || null,
+				photoUrls: allPhotoPaths,
+				eventType: eventData.eventType,
+				eventProperties: eventData.eventProperties || [],
+				paymentType: eventData.paymentType,
+				price: eventData.price || null,
+				currency: eventData.currency || 'BYN',
+				isPrivate: eventData.isPrivate || false,
+				maxParticipants: eventData.maxParticipants || null,
+				tags: eventData.tags || [],
+				ageRestriction: eventData.ageRestriction || null,
+				locationId
+			},
+			include: {
+				location: true,
+				organizer: true,
+				participants: true
+			}
+		})
+
+		return updated
+	}
 	async deleteEvent(eventId: string, userId: string) {
 		try {
 			// 1. Проверяем существует ли мероприятие и является ли пользователь организатором
