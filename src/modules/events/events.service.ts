@@ -63,6 +63,7 @@ type EventWithDetails = {
 		username: string
 		displayName: string
 		avatar: string | null
+		isVerified: boolean
 	}
 	participants: Array<{
 		id: string
@@ -777,6 +778,7 @@ export class EventsService {
 					u.username as username,
 					u.display_name as display_name,
 					u.avatar as organizer_avatar,
+					u.is_verified as organizer_is_verified,
 					(
 						SELECT json_agg(json_build_object(
 							'id', p.id,
@@ -938,7 +940,8 @@ export class EventsService {
 				id: event.organizer_id,
 				username: event.username,
 				displayName: event.display_name || event.username,
-				avatar: event.organizer_avatar
+				avatar: event.organizer_avatar,
+				isVerified: event.organizer_is_verified
 			},
 			participants: event.participants
 				? event.participants.map((p: any) => ({
@@ -1196,7 +1199,47 @@ export class EventsService {
 			throw error
 		}
 	}
+	async leaveEvent(eventId: string, userId: string) {
+		try {
+			// Проверяем, что событие существует
+			const event = await this.prisma.event.findUnique({
+				where: { id: eventId }
+			})
 
+			if (!event) {
+				throw new NotFoundException('Event not found')
+			}
+
+			// Проверяем, что пользователь действительно участник
+			const existingParticipation = await this.prisma.event.findFirst({
+				where: {
+					id: eventId,
+					participants: { some: { id: userId } }
+				}
+			})
+
+			if (!existingParticipation) {
+				throw new ConflictException(
+					'User is not a participant of this event'
+				)
+			}
+
+			// Удаляем участника
+			await this.prisma.event.update({
+				where: { id: eventId },
+				data: {
+					participants: {
+						disconnect: { id: userId }
+					}
+				}
+			})
+
+			return true
+		} catch (error) {
+			console.error('Error leaving event:', error)
+			throw error
+		}
+	}
 	async getEventsWhereIParticipate(userId: string) {
 		try {
 			type EventWithDetails = {

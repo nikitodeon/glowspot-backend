@@ -93,7 +93,16 @@ export class EventsResolver {
 	) {
 		return this.eventsService.participateInEvent(eventId, user.id)
 	}
-
+	// В вашем resolver-файле (например, events.resolver.ts)
+	@Authorization()
+	@Mutation(() => Boolean)
+	@UseGuards(GqlAuthGuard)
+	async leaveEvent(
+		@Args('eventId') eventId: string,
+		@Authorized() user: User
+	) {
+		return this.eventsService.leaveEvent(eventId, user.id)
+	}
 	@Authorization()
 	@Query(() => [EventModel], { name: 'getEventsWhereIParticipate' })
 	@UseGuards(GqlAuthGuard)
