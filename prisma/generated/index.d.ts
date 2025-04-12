@@ -1904,6 +1904,7 @@ export namespace Prisma {
     bio: string | null
     telegramId: string | null
     isVerified: boolean | null
+    isAdmin: boolean | null
     isEmailVerified: boolean | null
     isTotpEnabled: boolean | null
     totpSecret: string | null
@@ -1924,6 +1925,7 @@ export namespace Prisma {
     bio: string | null
     telegramId: string | null
     isVerified: boolean | null
+    isAdmin: boolean | null
     isEmailVerified: boolean | null
     isTotpEnabled: boolean | null
     totpSecret: string | null
@@ -1944,6 +1946,7 @@ export namespace Prisma {
     bio: number
     telegramId: number
     isVerified: number
+    isAdmin: number
     isEmailVerified: number
     isTotpEnabled: number
     totpSecret: number
@@ -1966,6 +1969,7 @@ export namespace Prisma {
     bio?: true
     telegramId?: true
     isVerified?: true
+    isAdmin?: true
     isEmailVerified?: true
     isTotpEnabled?: true
     totpSecret?: true
@@ -1986,6 +1990,7 @@ export namespace Prisma {
     bio?: true
     telegramId?: true
     isVerified?: true
+    isAdmin?: true
     isEmailVerified?: true
     isTotpEnabled?: true
     totpSecret?: true
@@ -2006,6 +2011,7 @@ export namespace Prisma {
     bio?: true
     telegramId?: true
     isVerified?: true
+    isAdmin?: true
     isEmailVerified?: true
     isTotpEnabled?: true
     totpSecret?: true
@@ -2099,6 +2105,7 @@ export namespace Prisma {
     bio: string | null
     telegramId: string | null
     isVerified: boolean
+    isAdmin: boolean
     isEmailVerified: boolean
     isTotpEnabled: boolean
     totpSecret: string | null
@@ -2136,6 +2143,7 @@ export namespace Prisma {
     bio?: boolean
     telegramId?: boolean
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: boolean
@@ -2166,6 +2174,7 @@ export namespace Prisma {
     bio?: boolean
     telegramId?: boolean
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: boolean
@@ -2186,6 +2195,7 @@ export namespace Prisma {
     bio?: boolean
     telegramId?: boolean
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: boolean
@@ -2206,6 +2216,7 @@ export namespace Prisma {
     bio?: boolean
     telegramId?: boolean
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: boolean
@@ -2216,7 +2227,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "password" | "username" | "displayName" | "avatar" | "bio" | "telegramId" | "isVerified" | "isEmailVerified" | "isTotpEnabled" | "totpSecret" | "isDeactivated" | "deactivatedAt" | "birthDate" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "password" | "username" | "displayName" | "avatar" | "bio" | "telegramId" | "isVerified" | "isAdmin" | "isEmailVerified" | "isTotpEnabled" | "totpSecret" | "isDeactivated" | "deactivatedAt" | "birthDate" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     tokens?: boolean | User$tokensArgs<ExtArgs>
     socialLinks?: boolean | User$socialLinksArgs<ExtArgs>
@@ -2255,6 +2266,7 @@ export namespace Prisma {
       bio: string | null
       telegramId: string | null
       isVerified: boolean
+      isAdmin: boolean
       isEmailVerified: boolean
       isTotpEnabled: boolean
       totpSecret: string | null
@@ -2704,6 +2716,7 @@ export namespace Prisma {
     readonly bio: FieldRef<"User", 'String'>
     readonly telegramId: FieldRef<"User", 'String'>
     readonly isVerified: FieldRef<"User", 'Boolean'>
+    readonly isAdmin: FieldRef<"User", 'Boolean'>
     readonly isEmailVerified: FieldRef<"User", 'Boolean'>
     readonly isTotpEnabled: FieldRef<"User", 'Boolean'>
     readonly totpSecret: FieldRef<"User", 'String'>
@@ -12397,6 +12410,7 @@ export namespace Prisma {
     bio: 'bio',
     telegramId: 'telegramId',
     isVerified: 'isVerified',
+    isAdmin: 'isAdmin',
     isEmailVerified: 'isEmailVerified',
     isTotpEnabled: 'isTotpEnabled',
     totpSecret: 'totpSecret',
@@ -12735,6 +12749,7 @@ export namespace Prisma {
     bio?: StringNullableFilter<"User"> | string | null
     telegramId?: StringNullableFilter<"User"> | string | null
     isVerified?: BoolFilter<"User"> | boolean
+    isAdmin?: BoolFilter<"User"> | boolean
     isEmailVerified?: BoolFilter<"User"> | boolean
     isTotpEnabled?: BoolFilter<"User"> | boolean
     totpSecret?: StringNullableFilter<"User"> | string | null
@@ -12764,6 +12779,7 @@ export namespace Prisma {
     bio?: SortOrderInput | SortOrder
     telegramId?: SortOrderInput | SortOrder
     isVerified?: SortOrder
+    isAdmin?: SortOrder
     isEmailVerified?: SortOrder
     isTotpEnabled?: SortOrder
     totpSecret?: SortOrderInput | SortOrder
@@ -12796,6 +12812,7 @@ export namespace Prisma {
     avatar?: StringNullableFilter<"User"> | string | null
     bio?: StringNullableFilter<"User"> | string | null
     isVerified?: BoolFilter<"User"> | boolean
+    isAdmin?: BoolFilter<"User"> | boolean
     isEmailVerified?: BoolFilter<"User"> | boolean
     isTotpEnabled?: BoolFilter<"User"> | boolean
     totpSecret?: StringNullableFilter<"User"> | string | null
@@ -12825,6 +12842,7 @@ export namespace Prisma {
     bio?: SortOrderInput | SortOrder
     telegramId?: SortOrderInput | SortOrder
     isVerified?: SortOrder
+    isAdmin?: SortOrder
     isEmailVerified?: SortOrder
     isTotpEnabled?: SortOrder
     totpSecret?: SortOrderInput | SortOrder
@@ -12851,6 +12869,7 @@ export namespace Prisma {
     bio?: StringNullableWithAggregatesFilter<"User"> | string | null
     telegramId?: StringNullableWithAggregatesFilter<"User"> | string | null
     isVerified?: BoolWithAggregatesFilter<"User"> | boolean
+    isAdmin?: BoolWithAggregatesFilter<"User"> | boolean
     isEmailVerified?: BoolWithAggregatesFilter<"User"> | boolean
     isTotpEnabled?: BoolWithAggregatesFilter<"User"> | boolean
     totpSecret?: StringNullableWithAggregatesFilter<"User"> | string | null
@@ -13495,6 +13514,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -13524,6 +13544,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -13553,6 +13574,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -13582,6 +13604,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -13611,6 +13634,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -13631,6 +13655,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -13651,6 +13676,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14444,6 +14470,7 @@ export namespace Prisma {
     bio?: SortOrder
     telegramId?: SortOrder
     isVerified?: SortOrder
+    isAdmin?: SortOrder
     isEmailVerified?: SortOrder
     isTotpEnabled?: SortOrder
     totpSecret?: SortOrder
@@ -14464,6 +14491,7 @@ export namespace Prisma {
     bio?: SortOrder
     telegramId?: SortOrder
     isVerified?: SortOrder
+    isAdmin?: SortOrder
     isEmailVerified?: SortOrder
     isTotpEnabled?: SortOrder
     totpSecret?: SortOrder
@@ -14484,6 +14512,7 @@ export namespace Prisma {
     bio?: SortOrder
     telegramId?: SortOrder
     isVerified?: SortOrder
+    isAdmin?: SortOrder
     isEmailVerified?: SortOrder
     isTotpEnabled?: SortOrder
     totpSecret?: SortOrder
@@ -16877,6 +16906,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -16905,6 +16935,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -16938,6 +16969,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -16966,6 +16998,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -16999,6 +17032,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -17027,6 +17061,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -17154,6 +17189,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -17182,6 +17218,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -17229,6 +17266,7 @@ export namespace Prisma {
     bio?: StringNullableFilter<"User"> | string | null
     telegramId?: StringNullableFilter<"User"> | string | null
     isVerified?: BoolFilter<"User"> | boolean
+    isAdmin?: BoolFilter<"User"> | boolean
     isEmailVerified?: BoolFilter<"User"> | boolean
     isTotpEnabled?: BoolFilter<"User"> | boolean
     totpSecret?: StringNullableFilter<"User"> | string | null
@@ -17358,6 +17396,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -17386,6 +17425,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -17497,6 +17537,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -17525,6 +17566,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -17553,6 +17595,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -17581,6 +17624,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -17625,6 +17669,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -17653,6 +17698,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -17681,6 +17727,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -17709,6 +17756,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -17753,6 +17801,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -17781,6 +17830,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -17809,6 +17859,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -17837,6 +17888,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -17881,6 +17933,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -17909,6 +17962,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -17937,6 +17991,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -17965,6 +18020,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -18009,6 +18065,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18037,6 +18094,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18065,6 +18123,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -18093,6 +18152,7 @@ export namespace Prisma {
     bio?: string | null
     telegramId?: string | null
     isVerified?: boolean
+    isAdmin?: boolean
     isEmailVerified?: boolean
     isTotpEnabled?: boolean
     totpSecret?: string | null
@@ -18198,6 +18258,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18226,6 +18287,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18877,6 +18939,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18905,6 +18968,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18933,6 +18997,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18953,6 +19018,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -18981,6 +19047,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null
@@ -19009,6 +19076,7 @@ export namespace Prisma {
     bio?: NullableStringFieldUpdateOperationsInput | string | null
     telegramId?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
+    isAdmin?: BoolFieldUpdateOperationsInput | boolean
     isEmailVerified?: BoolFieldUpdateOperationsInput | boolean
     isTotpEnabled?: BoolFieldUpdateOperationsInput | boolean
     totpSecret?: NullableStringFieldUpdateOperationsInput | string | null

@@ -4,28 +4,22 @@ import {
 	NotFoundException
 } from '@nestjs/common'
 import axios from 'axios'
-import * as Upload from 'graphql-upload/Upload.js'
+// import * as Upload from 'graphql-upload/Upload.js'
 import * as sharp from 'sharp'
+
 //   import { UpdateEventInput } from './inputs/update-event.input';
-//   import { EventStatus, EventType, PaymentType, User } from '@prisma/client';
-import * as wkt from 'wkt'
 
 import {
 	EventProperty,
 	EventStatus,
 	EventType,
-	PaymentType,
-	Prisma
+	PaymentType
 } from '@/prisma/generated'
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 import { PrismaService } from '@/src/core/prisma/prisma.service'
 
 import { StorageService } from '../libs/storage/storage.service'
 
 import { CreateEventInput } from './inputs/create-event.input'
-import { EventModel } from './models/event.model'
-
-// import { Prisma } from '@prisma/client'
 
 type EventWithDetails = {
 	id: string
@@ -342,10 +336,10 @@ export class EventsService {
 				}
 			}
 			// Собираем полный запрос
-			const whereClause =
-				whereConditions.length > 0
-					? `WHERE ${whereConditions.join(' AND ')}`
-					: ''
+			// const whereClause =
+			// 	whereConditions.length > 0
+			// 		? `WHERE ${whereConditions.join(' AND ')}`
+			// 		: ''
 
 			const query = `
 			  SELECT 

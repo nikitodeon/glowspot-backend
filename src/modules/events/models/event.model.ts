@@ -1,12 +1,6 @@
 import { Field, ObjectType } from '@nestjs/graphql'
 import { registerEnumType } from '@nestjs/graphql'
-import {
-	Event,
-	EventProperty,
-	EventType,
-	PaymentType,
-	User
-} from '@prisma/generated'
+import { EventProperty, EventType, PaymentType } from '@prisma/generated'
 import { EventStatus } from '@prisma/generated'
 
 import { UserModel } from '../../auth/account/models/user.model'

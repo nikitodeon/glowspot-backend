@@ -1,15 +1,9 @@
 import { UseGuards } from '@nestjs/common'
-import {
-	Args,
-	Mutation,
-	Parent,
-	Query,
-	ResolveField,
-	Resolver
-} from '@nestjs/graphql'
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql'
 import { User } from '@prisma/generated'
 import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js'
-import * as Upload from 'graphql-upload/Upload.js'
+
+// import * as Upload from 'graphql-upload/Upload.js'
 
 import { Authorization } from '@/src/shared/decorators/auth.decorator'
 import { Authorized } from '@/src/shared/decorators/authorized.decorator'

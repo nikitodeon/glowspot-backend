@@ -355,6 +355,7 @@ type UserModel {
   displayName: String!
   email: String!
   id: ID!
+  isAdmin: Boolean!
   isDeactivated: Boolean!
   isEmailVerified: Boolean!
   isTotpEnabled: Boolean!

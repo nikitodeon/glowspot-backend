@@ -41,6 +41,9 @@ export class UserModel implements User {
 	public isVerified: boolean
 
 	@Field(() => Boolean)
+	public isAdmin: boolean
+
+	@Field(() => Boolean)
 	public isEmailVerified: boolean
 
 	@Field(() => Boolean)

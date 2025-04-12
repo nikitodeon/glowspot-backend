@@ -26,7 +26,7 @@ model User {
   telegramId String? @unique @map("telegram_id")
 
   isVerified Boolean @default(false) @map("is_verified")
-
+isAdmin Boolean @default(false) @map("is_admin")
   isEmailVerified Boolean @default(false) @map("is_email_verified")
   isTotpEnabled   Boolean @default(false) @map("is_totp_enabled")
   totpSecret      String? @map("totp_secret")

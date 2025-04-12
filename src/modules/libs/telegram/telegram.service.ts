@@ -31,7 +31,7 @@ export class TelegramService extends Telegraf {
 	public async onStart(@Ctx() ctx: any) {
 		// const username = ctx.message.from.username
 
-		// await ctx.replyWithHTML(` ${username} Иди нахуй чмо`)
+		// await ctx.replyWithHTML(` ${username} HI`)
 
 		const chatId = ctx.chat.id.toString()
 		const token = ctx.message.text.split(' ')[1]

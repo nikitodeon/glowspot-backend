@@ -127,6 +127,7 @@ exports.Prisma.UserScalarFieldEnum = {
   bio: 'bio',
   telegramId: 'telegramId',
   isVerified: 'isVerified',
+  isAdmin: 'isAdmin',
   isEmailVerified: 'isEmailVerified',
   isTotpEnabled: 'isTotpEnabled',
   totpSecret: 'totpSecret',
