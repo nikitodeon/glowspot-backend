@@ -3,9 +3,9 @@ import { Cron, CronExpression } from '@nestjs/schedule'
 
 import { PrismaService } from '@/src/core/prisma/prisma.service'
 
-import { MailService } from '../libs/mail/mail.service'
-import { StorageService } from '../libs/storage/storage.service'
-import { TelegramService } from '../libs/telegram/telegram.service'
+import { MailService } from '../notification/libs/mail/mail.service'
+import { StorageService } from '../notification/libs/storage/storage.service'
+import { TelegramService } from '../notification/libs/telegram/telegram.service'
 import { NotificationService } from '../notification/notification.service'
 
 @Injectable()

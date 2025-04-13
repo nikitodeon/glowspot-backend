@@ -3,8 +3,9 @@ import { registerEnumType } from '@nestjs/graphql'
 import { EventProperty, EventType, PaymentType } from '@prisma/generated'
 import { EventStatus } from '@prisma/generated'
 
-import { UserModel } from '../../auth/account/models/user.model'
-import { LocationModel } from '../../events/models/location.model'
+import { UserModel } from '../../../auth/account/models/user.model'
+
+import { LocationModel } from './location.model'
 
 registerEnumType(EventType, { name: 'EventType' })
 registerEnumType(EventProperty, { name: 'EventProperty' })

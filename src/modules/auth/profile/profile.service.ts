@@ -5,7 +5,7 @@ import * as sharp from 'sharp'
 import type { User } from '@/prisma/generated'
 import { PrismaService } from '@/src/core/prisma/prisma.service'
 
-import { StorageService } from '../../libs/storage/storage.service'
+import { StorageService } from '../../notification/libs/storage/storage.service'
 
 import { ChangeProfileInfoInput } from './inputs/change-profile-info.input'
 import {

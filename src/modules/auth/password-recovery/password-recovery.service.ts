@@ -12,8 +12,8 @@ import { PrismaService } from '@/src/core/prisma/prisma.service'
 import { generateToken } from '@/src/shared/utils/generate-token.util'
 import { getSessionMetadata } from '@/src/shared/utils/session-metadata.util'
 
-import { MailService } from '../../libs/mail/mail.service'
-import { TelegramService } from '../../libs/telegram/telegram.service'
+import { MailService } from '../../notification/libs/mail/mail.service'
+import { TelegramService } from '../../notification/libs/telegram/telegram.service'
 
 import { NewPasswordInput } from './inputs/new-password.input'
 import { ResetPasswordInput } from './inputs/reset-password.input'

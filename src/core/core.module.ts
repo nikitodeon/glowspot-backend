@@ -11,10 +11,13 @@ import { SessionModule } from '../modules/auth/session/session.module'
 import { TotpModule } from '../modules/auth/totp/totp.module'
 import { VerificationModule } from '../modules/auth/verification/verification.module'
 import { CronModule } from '../modules/cron/cron.module'
-import { EventsModule } from '../modules/events/events.module'
-import { MailModule } from '../modules/libs/mail/mail.module'
-import { StorageModule } from '../modules/libs/storage/storage.module'
-import { TelegramModule } from '../modules/libs/telegram/telegram.module'
+import { EventCommonModule } from '../modules/events/event-common/event-common.module'
+import { EventFavoritesModule } from '../modules/events/event-favorites/event-favorites.module'
+import { EventOrganizationModule } from '../modules/events/event-organization/event-organization.module'
+import { EventParticipationModule } from '../modules/events/event-participation/event-participation.module'
+import { MailModule } from '../modules/notification/libs/mail/mail.module'
+import { StorageModule } from '../modules/notification/libs/storage/storage.module'
+import { TelegramModule } from '../modules/notification/libs/telegram/telegram.module'
 import { NotificationModule } from '../modules/notification/notification.module'
 import { OrganizersVerificationModule } from '../modules/organizers-verification/organizers-verification.module'
 import { IS_DEV_ENV } from '../shared/utils/is-dev.util'
@@ -54,7 +57,10 @@ import { RedisModule } from './redis/redis.module'
 
 		NotificationModule,
 
-		EventsModule,
+		EventCommonModule,
+		EventParticipationModule,
+		EventFavoritesModule,
+		EventOrganizationModule,
 		OrganizersVerificationModule
 	]
 })

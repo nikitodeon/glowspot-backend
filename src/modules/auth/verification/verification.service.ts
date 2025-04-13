@@ -11,7 +11,7 @@ import { generateToken } from '@/src/shared/utils/generate-token.util'
 import { getSessionMetadata } from '@/src/shared/utils/session-metadata.util'
 import { saveSession } from '@/src/shared/utils/session.util'
 
-import { MailService } from '../../libs/mail/mail.service'
+import { MailService } from '../../notification/libs/mail/mail.service'
 
 import { VerificationInput } from './inputs/verification.input'
 

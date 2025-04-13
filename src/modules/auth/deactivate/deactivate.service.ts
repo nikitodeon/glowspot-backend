@@ -15,8 +15,8 @@ import { generateToken } from '@/src/shared/utils/generate-token.util'
 import { getSessionMetadata } from '@/src/shared/utils/session-metadata.util'
 import { destroySession } from '@/src/shared/utils/session.util'
 
-import { MailService } from '../../libs/mail/mail.service'
-import { TelegramService } from '../../libs/telegram/telegram.service'
+import { MailService } from '../../notification/libs/mail/mail.service'
+import { TelegramService } from '../../notification/libs/telegram/telegram.service'
 
 import { DeactivateAccountInput } from './inputs/deactivate-account.input'
 

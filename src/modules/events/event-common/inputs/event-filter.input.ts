@@ -43,4 +43,7 @@ export class EventFilterInput {
 
 	@Field({ nullable: true })
 	currency?: string
+
+	@Field({ nullable: true })
+	verifiedOnly?: boolean
 }
