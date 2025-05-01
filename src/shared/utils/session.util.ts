@@ -35,9 +35,12 @@ export function saveSession(
 				)
 			}
 
-			logger.log('Сессия успешно сохранена')
+			// 🔥 УСТАНАВЛИВАЕМ КУКУ ВРУЧНУЮ
+			const cookieHeader = `your_session_name=${req.sessionID}; Path=/; Domain=.glowspot.ru; Max-Age=2592000; HttpOnly; Secure; SameSite=None`
+			req.res?.setHeader('Set-Cookie', cookieHeader)
 
-			resolve(user)
+			logger.log('Сессия успешно сохранена')
+			logger.debug('Set-Cookie вручную отправлен:', cookieHeader)
 			resolve(user)
 		})
 	})
