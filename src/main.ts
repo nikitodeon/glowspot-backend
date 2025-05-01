@@ -49,7 +49,17 @@ async function bootstrap() {
 			})
 		})
 	)
-
+	app.use((req, res, next) => {
+		if (req.session && req.session.cookie) {
+			res.cookie(req.session.cookie.name, req.sessionID, {
+				httpOnly: true,
+				secure: req.protocol === 'https', // если это https
+				sameSite: 'None', // без этого cookies не будут работать на разных доменах
+				maxAge: ms(config.getOrThrow<StringValue>('SESSION_MAX_AGE'))
+			})
+		}
+		next()
+	})
 	app.enableCors({
 		origin: config.getOrThrow<string>('ALLOWED_ORIGIN'),
 		credentials: true,
