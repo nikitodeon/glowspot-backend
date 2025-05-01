@@ -49,12 +49,7 @@ async function bootstrap() {
 			})
 		})
 	)
-	app.use((req, res, next) => {
-		res.on('finish', () => {
-			console.log('Final Set-Cookie header:', res.getHeader('Set-Cookie'))
-		})
-		next()
-	})
+
 	app.enableCors({
 		origin: config.getOrThrow<string>('ALLOWED_ORIGIN'),
 		credentials: true,
