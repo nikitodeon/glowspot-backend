@@ -57,24 +57,24 @@ async function bootstrap() {
 	)
 
 	// Промежуточное ПО для принудительного добавления cookies в response
-	app.use((req, res, next) => {
-		if (req.session && req.session.cookie) {
-			// Принудительно добавляем cookie в ответ
-			res.cookie(req.session.cookie.name, req.sessionID, {
-				httpOnly: true, // защищаем cookie
-				secure: req.protocol === 'https', // Если это https - выставляем secure=true
-				sameSite: 'None', // Без этого cookies не будут работать на разных доменах
-				maxAge: ms(config.getOrThrow<StringValue>('SESSION_MAX_AGE')) // Время жизни cookies
-			})
-		}
-		next()
-	})
+	// app.use((req, res, next) => {
+	// 	if (req.session && req.session.cookie) {
+	// 		// Принудительно добавляем cookie в ответ
+	// 		res.cookie(req.session.cookie.name, req.sessionID, {
+	// 			httpOnly: true, // защищаем cookie
+	// 			secure: req.protocol === 'https', // Если это https - выставляем secure=true
+	// 			sameSite: 'None', // Без этого cookies не будут работать на разных доменах
+	// 			maxAge: ms(config.getOrThrow<StringValue>('SESSION_MAX_AGE')) // Время жизни cookies
+	// 		})
+	// 	}
+	// 	next()
+	// })
 
 	// Принудительное включение CORS
 	app.enableCors({
-		origin: ['https://glowspot.ru'], // Указываем точный источник
+		origin: 'https://glowspot.ru', // Указан правильный origin
 		credentials: true, // Разрешаем отправку cookies
-		methods: ['GET', 'POST', 'OPTIONS'], // Разрешаем необходимые методы
+		methods: ['GET', 'POST', 'OPTIONS'], // Разрешаем GET, POST, OPTIONS методы
 		allowedHeaders: [
 			'DNT',
 			'User-Agent',
@@ -84,12 +84,49 @@ async function bootstrap() {
 			'Content-Type',
 			'Authorization',
 			'apollo-require-preflight',
-			'Set-Cookie' // Этот заголовок нужно разрешить, чтобы cookies передавались
+			'Set-Cookie'
 		],
 		exposedHeaders: ['set-cookie'], // Обязательно expose set-cookie для клиента
-		preflightContinue: true, // Обрабатываем preflight запросы
-		optionsSuccessStatus: 204 // Устанавливаем статус для успешного preflight запроса
+		preflightContinue: true, // Убедитесь, что preflight запросы проходят
+		optionsSuccessStatus: 204 // Устанавливаем успешный статус для preflight запроса
 	})
+
+	// Хардкожим обработку OPTIONS-запросов (preflight)
+	app.use((req, res, next) => {
+		if (req.method === 'OPTIONS') {
+			res.setHeader('Access-Control-Allow-Origin', 'https://glowspot.ru')
+			res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+			res.setHeader(
+				'Access-Control-Allow-Headers',
+				'Content-Type, Authorization, Set-Cookie, apollo-require-preflight'
+			)
+			res.setHeader('Access-Control-Allow-Credentials', 'true')
+			res.status(204).send('')
+		} else {
+			next()
+		}
+	})
+
+	// Конфигурация сессий
+	app.use(
+		session({
+			secret: config.getOrThrow<string>('SESSION_SECRET'),
+			name: config.getOrThrow<string>('SESSION_NAME'),
+			resave: false,
+			saveUninitialized: false,
+			cookie: {
+				maxAge: 2592000000, // Например, 30 дней
+				httpOnly: true,
+				secure: process.env.NODE_ENV === 'production', // если HTTPS
+				sameSite: 'none' // чтобы куки работали на разных доменах
+			},
+			store: new RedisStore({
+				client: redis,
+				prefix: config.getOrThrow<string>('SESSION_FOLDER')
+			})
+		})
+	)
+
 	// Запуск приложения на порту
 	await app.listen(config.getOrThrow<number>('APPLICATION_PORT'))
 }
