@@ -34,7 +34,6 @@ async function bootstrap() {
 			saveUninitialized: false,
 			cookie: {
 				domain: config.getOrThrow<string>('SESSION_DOMAIN'),
-
 				maxAge: ms(config.getOrThrow<StringValue>('SESSION_MAX_AGE')),
 				httpOnly: parseBoolean(
 					config.getOrThrow<string>('SESSION_HTTP_ONLY')
@@ -54,6 +53,17 @@ async function bootstrap() {
 	app.enableCors({
 		origin: config.getOrThrow<string>('ALLOWED_ORIGIN'),
 		credentials: true,
+		methods: ['GET', 'POST', 'OPTIONS'],
+		allowedHeaders: [
+			'DNT',
+			'User-Agent',
+			'X-Requested-With',
+			'If-Modified-Since',
+			'Cache-Control',
+			'Content-Type',
+			'Authorization',
+			'apollo-require-preflight'
+		],
 		exposedHeaders: ['set-cookie']
 	})
 
