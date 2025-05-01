@@ -83,7 +83,8 @@ async function bootstrap() {
 			'Cache-Control',
 			'Content-Type',
 			'Authorization',
-			'apollo-require-preflight'
+			'apollo-require-preflight',
+			'Set-Cookie' // Это очень важно! Мы должны разрешить Set-Cookie в заголовках
 		],
 		exposedHeaders: ['set-cookie'] // Обязательно expose set-cookie, чтобы было доступно на клиенте
 	})
