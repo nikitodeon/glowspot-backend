@@ -72,8 +72,8 @@ async function bootstrap() {
 
 	// Принудительное включение CORS
 	app.enableCors({
-		origin: config.getOrThrow<string>('ALLOWED_ORIGIN'),
-		credentials: true, // Обязательно включаем
+		origin: ['https://glowspot.ru'], // Указываем точный источник
+		credentials: true, // Разрешаем отправку cookies
 		methods: ['GET', 'POST', 'OPTIONS'], // Разрешаем необходимые методы
 		allowedHeaders: [
 			'DNT',
@@ -84,11 +84,12 @@ async function bootstrap() {
 			'Content-Type',
 			'Authorization',
 			'apollo-require-preflight',
-			'Set-Cookie' // Это очень важно! Мы должны разрешить Set-Cookie в заголовках
+			'Set-Cookie' // Этот заголовок нужно разрешить, чтобы cookies передавались
 		],
-		exposedHeaders: ['set-cookie'] // Обязательно expose set-cookie, чтобы было доступно на клиенте
+		exposedHeaders: ['set-cookie'], // Обязательно expose set-cookie для клиента
+		preflightContinue: true, // Обрабатываем preflight запросы
+		optionsSuccessStatus: 204 // Устанавливаем статус для успешного preflight запроса
 	})
-
 	// Запуск приложения на порту
 	await app.listen(config.getOrThrow<number>('APPLICATION_PORT'))
 }
