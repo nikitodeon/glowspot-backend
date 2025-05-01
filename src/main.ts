@@ -17,15 +17,20 @@ async function bootstrap() {
 	const config = app.get(ConfigService)
 	const redis = app.get(RedisService)
 
+	// Парсинг cookies
 	app.use(cookieParser(config.getOrThrow<string>('COOKIES_SECRET')))
+
+	// Использование graphql upload
 	app.use(config.getOrThrow<string>('GRAPHQL_PREFIX'), graphqlUploadExpress())
 
+	// Валидация глобальная
 	app.useGlobalPipes(
 		new ValidationPipe({
 			transform: true
 		})
 	)
 
+	// Сессии с явным контролем куки
 	app.use(
 		session({
 			secret: config.getOrThrow<string>('SESSION_SECRET'),
@@ -34,6 +39,7 @@ async function bootstrap() {
 			saveUninitialized: false,
 			cookie: {
 				// domain: config.getOrThrow<string>('SESSION_DOMAIN'),
+				// Так как SameSite=None необходимо для работы кросс-доменных cookies
 				maxAge: ms(config.getOrThrow<StringValue>('SESSION_MAX_AGE')),
 				httpOnly: parseBoolean(
 					config.getOrThrow<string>('SESSION_HTTP_ONLY')
@@ -41,7 +47,7 @@ async function bootstrap() {
 				secure: parseBoolean(
 					config.getOrThrow<string>('SESSION_SECURE')
 				),
-				sameSite: 'none'
+				sameSite: 'none' // НЕ ЗАБУДЬ: это нужно для кросс-доменных cookies
 			},
 			store: new RedisStore({
 				client: redis,
@@ -49,21 +55,26 @@ async function bootstrap() {
 			})
 		})
 	)
+
+	// Промежуточное ПО для принудительного добавления cookies в response
 	app.use((req, res, next) => {
 		if (req.session && req.session.cookie) {
+			// Принудительно добавляем cookie в ответ
 			res.cookie(req.session.cookie.name, req.sessionID, {
-				httpOnly: true,
-				secure: req.protocol === 'https', // если это https
-				sameSite: 'None', // без этого cookies не будут работать на разных доменах
-				maxAge: ms(config.getOrThrow<StringValue>('SESSION_MAX_AGE'))
+				httpOnly: true, // защищаем cookie
+				secure: req.protocol === 'https', // Если это https - выставляем secure=true
+				sameSite: 'None', // Без этого cookies не будут работать на разных доменах
+				maxAge: ms(config.getOrThrow<StringValue>('SESSION_MAX_AGE')) // Время жизни cookies
 			})
 		}
 		next()
 	})
+
+	// Принудительное включение CORS
 	app.enableCors({
 		origin: config.getOrThrow<string>('ALLOWED_ORIGIN'),
-		credentials: true,
-		methods: ['GET', 'POST', 'OPTIONS'],
+		credentials: true, // Обязательно включаем
+		methods: ['GET', 'POST', 'OPTIONS'], // Разрешаем необходимые методы
 		allowedHeaders: [
 			'DNT',
 			'User-Agent',
@@ -74,9 +85,10 @@ async function bootstrap() {
 			'Authorization',
 			'apollo-require-preflight'
 		],
-		exposedHeaders: ['set-cookie']
+		exposedHeaders: ['set-cookie'] // Обязательно expose set-cookie, чтобы было доступно на клиенте
 	})
 
+	// Запуск приложения на порту
 	await app.listen(config.getOrThrow<number>('APPLICATION_PORT'))
 }
 bootstrap()
