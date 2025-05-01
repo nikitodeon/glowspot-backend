@@ -36,10 +36,7 @@ export function saveSession(
 			}
 
 			logger.log('Сессия успешно сохранена')
-			logger.debug(
-				'Set-Cookie (вручную):',
-				req.res?.getHeader('Set-Cookie')
-			) // <-- ВАЖНО: тут
+
 			resolve(user)
 			resolve(user)
 		})
