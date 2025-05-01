@@ -17,6 +17,14 @@ async function bootstrap() {
 	const config = app.get(ConfigService)
 	const redis = app.get(RedisService)
 
+	// Важно: вручную установить CORS-заголовки
+	app.use((req, res, next) => {
+		const origin = config.getOrThrow<string>('ALLOWED_ORIGIN')
+		res.header('Access-Control-Allow-Origin', origin)
+		res.header('Access-Control-Allow-Credentials', 'true')
+		next()
+	})
+
 	app.use(cookieParser(config.getOrThrow<string>('COOKIES_SECRET')))
 	app.use(config.getOrThrow<string>('GRAPHQL_PREFIX'), graphqlUploadExpress())
 
@@ -34,7 +42,6 @@ async function bootstrap() {
 			saveUninitialized: false,
 			cookie: {
 				domain: config.getOrThrow<string>('SESSION_DOMAIN'),
-
 				maxAge: ms(config.getOrThrow<StringValue>('SESSION_MAX_AGE')),
 				httpOnly: parseBoolean(
 					config.getOrThrow<string>('SESSION_HTTP_ONLY')
@@ -52,7 +59,7 @@ async function bootstrap() {
 	)
 
 	app.enableCors({
-		origin: config.getOrThrow<string>('ALLOWED_ORIGIN'), // вместо массива
+		origin: config.getOrThrow<string>('ALLOWED_ORIGIN'),
 		credentials: true,
 		exposedHeaders: ['set-cookie']
 	})
