@@ -139,37 +139,67 @@ export class SessionService {
 		return saveSession(req, user, metadata)
 	}
 
-	public async logout(req: Request) {
-		return destroySession(req, this.configService)
-	}
+	// public async logout(req: Request) {
+	// 	return destroySession(req, this.configService)
+	// }
 
+	// // public async clearSession(req: Request) {
+	// // 	console.log('Clearing session cookies...')
+
+	// // 	req?.res?.clearCookie(
+	// // 		this.configService.getOrThrow<string>('SESSION_NAME')
+	// // 	)
+
+	// // 	return true
+	// // }
 	// public async clearSession(req: Request) {
-	// 	console.log('Clearing session cookies...')
-
-	// 	req?.res?.clearCookie(
+	// 	const sessionName =
 	// 		this.configService.getOrThrow<string>('SESSION_NAME')
-	// 	)
+
+	// 	req?.res?.clearCookie(sessionName, {
+	// 		domain: this.configService.getOrThrow<string>('SESSION_DOMAIN'),
+	// 		path: '/',
+	// 		httpOnly: parseBoolean(
+	// 			this.configService.getOrThrow<string>('SESSION_HTTP_ONLY')
+	// 		),
+	// 		secure: parseBoolean(
+	// 			this.configService.getOrThrow<string>('SESSION_SECURE')
+	// 		),
+	// 		sameSite: 'lax'
+	// 	})
 
 	// 	return true
 	// }
-	public async clearSession(req: Request) {
+
+	public async logout(req: Request) {
 		const sessionName =
 			this.configService.getOrThrow<string>('SESSION_NAME')
 
-		req?.res?.clearCookie(sessionName, {
-			domain: this.configService.getOrThrow<string>('SESSION_DOMAIN'),
-			path: '/',
-			httpOnly: parseBoolean(
-				this.configService.getOrThrow<string>('SESSION_HTTP_ONLY')
-			),
-			secure: parseBoolean(
-				this.configService.getOrThrow<string>('SESSION_SECURE')
-			),
-			sameSite: 'lax'
-		})
+		return new Promise((resolve, reject) => {
+			req.session.destroy(err => {
+				if (err) return reject(err)
 
-		return true
+				req.res?.clearCookie(sessionName, {
+					domain: this.configService.getOrThrow<string>(
+						'SESSION_DOMAIN'
+					),
+					path: '/',
+					httpOnly: parseBoolean(
+						this.configService.getOrThrow<string>(
+							'SESSION_HTTP_ONLY'
+						)
+					),
+					secure: parseBoolean(
+						this.configService.getOrThrow<string>('SESSION_SECURE')
+					),
+					sameSite: 'lax'
+				})
+
+				resolve(true)
+			})
+		})
 	}
+
 	public async remove(req: Request, id: string) {
 		if (req.session.id === id) {
 			throw new ConflictException('Текущую сессию удалить нельзя')
