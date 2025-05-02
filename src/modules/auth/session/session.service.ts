@@ -170,12 +170,11 @@ export class SessionService {
 
 	// 	return true
 	// }
-
 	public async logout(req: Request) {
 		const sessionName =
 			this.configService.getOrThrow<string>('SESSION_NAME')
 
-		return new Promise((resolve, reject) => {
+		return new Promise<boolean>((resolve, reject) => {
 			req.session.destroy(err => {
 				if (err) return reject(err)
 
@@ -198,6 +197,25 @@ export class SessionService {
 				resolve(true)
 			})
 		})
+	}
+
+	public async clearSession(req: Request): Promise<boolean> {
+		const sessionName =
+			this.configService.getOrThrow<string>('SESSION_NAME')
+
+		req.res?.clearCookie(sessionName, {
+			domain: this.configService.getOrThrow<string>('SESSION_DOMAIN'),
+			path: '/',
+			httpOnly: parseBoolean(
+				this.configService.getOrThrow<string>('SESSION_HTTP_ONLY')
+			),
+			secure: parseBoolean(
+				this.configService.getOrThrow<string>('SESSION_SECURE')
+			),
+			sameSite: 'lax'
+		})
+
+		return true
 	}
 
 	public async remove(req: Request, id: string) {
