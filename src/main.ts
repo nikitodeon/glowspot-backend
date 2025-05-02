@@ -17,20 +17,15 @@ async function bootstrap() {
 	const config = app.get(ConfigService)
 	const redis = app.get(RedisService)
 
-	// Парсинг cookies
 	app.use(cookieParser(config.getOrThrow<string>('COOKIES_SECRET')))
-
-	// Использование graphql upload
 	app.use(config.getOrThrow<string>('GRAPHQL_PREFIX'), graphqlUploadExpress())
 
-	// Валидация глобальная
 	app.useGlobalPipes(
 		new ValidationPipe({
 			transform: true
 		})
 	)
 
-	// Сессии с явным контролем куки
 	app.use(
 		session({
 			secret: config.getOrThrow<string>('SESSION_SECRET'),
@@ -38,8 +33,7 @@ async function bootstrap() {
 			resave: false,
 			saveUninitialized: false,
 			cookie: {
-				// domain: config.getOrThrow<string>('SESSION_DOMAIN'),
-				// Так как SameSite=None необходимо для работы кросс-доменных cookies
+				domain: config.getOrThrow<string>('SESSION_DOMAIN'),
 				maxAge: ms(config.getOrThrow<StringValue>('SESSION_MAX_AGE')),
 				httpOnly: parseBoolean(
 					config.getOrThrow<string>('SESSION_HTTP_ONLY')
@@ -47,7 +41,7 @@ async function bootstrap() {
 				secure: parseBoolean(
 					config.getOrThrow<string>('SESSION_SECURE')
 				),
-				sameSite: 'none' // НЕ ЗАБУДЬ: это нужно для кросс-доменных cookies
+				sameSite: 'none'
 			},
 			store: new RedisStore({
 				client: redis,
@@ -56,25 +50,10 @@ async function bootstrap() {
 		})
 	)
 
-	// Промежуточное ПО для принудительного добавления cookies в response
-	// app.use((req, res, next) => {
-	// 	if (req.session && req.session.cookie) {
-	// 		// Принудительно добавляем cookie в ответ
-	// 		res.cookie(req.session.cookie.name, req.sessionID, {
-	// 			httpOnly: true, // защищаем cookie
-	// 			secure: req.protocol === 'https', // Если это https - выставляем secure=true
-	// 			sameSite: 'None', // Без этого cookies не будут работать на разных доменах
-	// 			maxAge: ms(config.getOrThrow<StringValue>('SESSION_MAX_AGE')) // Время жизни cookies
-	// 		})
-	// 	}
-	// 	next()
-	// })
-
-	// Принудительное включение CORS
 	app.enableCors({
-		origin: 'https://glowspot.ru', // Указан правильный origin
-		credentials: true, // Разрешаем отправку cookies
-		methods: ['GET', 'POST', 'OPTIONS'], // Разрешаем GET, POST, OPTIONS методы
+		origin: config.getOrThrow<string>('ALLOWED_ORIGIN'),
+		credentials: true,
+		methods: ['GET', 'POST', 'OPTIONS'],
 		allowedHeaders: [
 			'DNT',
 			'User-Agent',
@@ -83,51 +62,11 @@ async function bootstrap() {
 			'Cache-Control',
 			'Content-Type',
 			'Authorization',
-			'apollo-require-preflight',
-			'Set-Cookie'
+			'apollo-require-preflight'
 		],
-		exposedHeaders: ['set-cookie'], // Обязательно expose set-cookie для клиента
-		preflightContinue: true, // Убедитесь, что preflight запросы проходят
-		optionsSuccessStatus: 204 // Устанавливаем успешный статус для preflight запроса
+		exposedHeaders: ['set-cookie']
 	})
 
-	// Хардкожим обработку OPTIONS-запросов (preflight)
-	app.use((req, res, next) => {
-		if (req.method === 'OPTIONS') {
-			res.setHeader('Access-Control-Allow-Origin', 'https://glowspot.ru')
-			res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-			res.setHeader(
-				'Access-Control-Allow-Headers',
-				'Content-Type, Authorization, Set-Cookie, apollo-require-preflight'
-			)
-			res.setHeader('Access-Control-Allow-Credentials', 'true')
-			res.status(204).send('')
-		} else {
-			next()
-		}
-	})
-
-	// Конфигурация сессий
-	app.use(
-		session({
-			secret: config.getOrThrow<string>('SESSION_SECRET'),
-			name: config.getOrThrow<string>('SESSION_NAME'),
-			resave: false,
-			saveUninitialized: false,
-			cookie: {
-				maxAge: 2592000000, // Например, 30 дней
-				httpOnly: true,
-				secure: process.env.NODE_ENV === 'production', // если HTTPS
-				sameSite: 'none' // чтобы куки работали на разных доменах
-			},
-			store: new RedisStore({
-				client: redis,
-				prefix: config.getOrThrow<string>('SESSION_FOLDER')
-			})
-		})
-	)
-
-	// Запуск приложения на порту
 	await app.listen(config.getOrThrow<number>('APPLICATION_PORT'))
 }
 bootstrap()
