@@ -12,6 +12,7 @@ import { TOTP } from 'otpauth'
 
 import { PrismaService } from '@/src/core/prisma/prisma.service'
 import { RedisService } from '@/src/core/redis/redis.service'
+import { parseBoolean } from '@/src/shared/utils/parse-boolean.util'
 import { getSessionMetadata } from '@/src/shared/utils/session-metadata.util'
 import { destroySession, saveSession } from '@/src/shared/utils/session.util'
 
@@ -138,16 +139,63 @@ export class SessionService {
 		return saveSession(req, user, metadata)
 	}
 
+	// public async logout(req: Request) {
+	// 	return destroySession(req, this.configService)
+	// }
+
+	// public async clearSession(req: Request) {
+	// 	console.log('Clearing session cookies...')
+
+	// 	req?.res?.clearCookie(
+	// 		this.configService.getOrThrow<string>('SESSION_NAME')
+	// 	)
+
+	// 	return true
+	// }
 	public async logout(req: Request) {
-		return destroySession(req, this.configService)
+		const sessionName =
+			this.configService.getOrThrow<string>('SESSION_NAME')
+
+		return new Promise<boolean>((resolve, reject) => {
+			req.session.destroy(err => {
+				if (err) return reject(err)
+
+				req.res?.clearCookie(sessionName, {
+					domain: this.configService.getOrThrow<string>(
+						'SESSION_DOMAIN'
+					),
+					path: '/',
+					httpOnly: parseBoolean(
+						this.configService.getOrThrow<string>(
+							'SESSION_HTTP_ONLY'
+						)
+					),
+					secure: parseBoolean(
+						this.configService.getOrThrow<string>('SESSION_SECURE')
+					),
+					sameSite: 'lax'
+				})
+
+				resolve(true)
+			})
+		})
 	}
 
-	public async clearSession(req: Request) {
-		console.log('Clearing session cookies...')
-
-		req?.res?.clearCookie(
+	public async clearSession(req: Request): Promise<boolean> {
+		const sessionName =
 			this.configService.getOrThrow<string>('SESSION_NAME')
-		)
+
+		req.res?.clearCookie(sessionName, {
+			domain: this.configService.getOrThrow<string>('SESSION_DOMAIN'),
+			path: '/',
+			httpOnly: parseBoolean(
+				this.configService.getOrThrow<string>('SESSION_HTTP_ONLY')
+			),
+			secure: parseBoolean(
+				this.configService.getOrThrow<string>('SESSION_SECURE')
+			),
+			sameSite: 'lax'
+		})
 
 		return true
 	}
