@@ -12,6 +12,7 @@ import { TOTP } from 'otpauth'
 
 import { PrismaService } from '@/src/core/prisma/prisma.service'
 import { RedisService } from '@/src/core/redis/redis.service'
+import { parseBoolean } from '@/src/shared/utils/parse-boolean.util'
 import { getSessionMetadata } from '@/src/shared/utils/session-metadata.util'
 import { destroySession, saveSession } from '@/src/shared/utils/session.util'
 
@@ -66,12 +67,12 @@ export class SessionService {
 	public async findCurrent(req: Request) {
 		const sessionId = req.session.id
 
-		const sessionData = await this.redisService.get(
+		const sessionData: any = await this.redisService.get(
 			`${this.configService.getOrThrow<string>('SESSION_FOLDER')}${sessionId}`
 		)
-		if (!sessionData) {
-			throw new NotFoundException('Сессия не обнаружена')
-		}
+		// if (!sessionData) {
+		// 	throw new NotFoundException('Сессия не обнаружена')
+		// }
 
 		const session = JSON.parse(sessionData)
 
@@ -142,16 +143,33 @@ export class SessionService {
 		return destroySession(req, this.configService)
 	}
 
-	public async clearSession(req: Request) {
-		console.log('Clearing session cookies...')
+	// public async clearSession(req: Request) {
+	// 	console.log('Clearing session cookies...')
 
-		req?.res?.clearCookie(
+	// 	req?.res?.clearCookie(
+	// 		this.configService.getOrThrow<string>('SESSION_NAME')
+	// 	)
+
+	// 	return true
+	// }
+	public async clearSession(req: Request) {
+		const sessionName =
 			this.configService.getOrThrow<string>('SESSION_NAME')
-		)
+
+		req?.res?.clearCookie(sessionName, {
+			domain: this.configService.getOrThrow<string>('SESSION_DOMAIN'),
+			path: '/',
+			httpOnly: parseBoolean(
+				this.configService.getOrThrow<string>('SESSION_HTTP_ONLY')
+			),
+			secure: parseBoolean(
+				this.configService.getOrThrow<string>('SESSION_SECURE')
+			),
+			sameSite: 'lax'
+		})
 
 		return true
 	}
-
 	public async remove(req: Request, id: string) {
 		if (req.session.id === id) {
 			throw new ConflictException('Текущую сессию удалить нельзя')
