@@ -48,9 +48,6 @@ export class CronService {
 			if (user.avatar) {
 				this.storageService.remove(user.avatar ?? '')
 			}
-			// if (user.stream?.thumbnailUrl) {
-			// 	this.storageService.remove(user.stream.thumbnailUrl)
-			// }
 		}
 		console.log('Deleted deactivated accounts : ', deactivatedAccounts)
 		await this.prismaService.user.deleteMany({
@@ -96,49 +93,6 @@ export class CronService {
 
 	@Cron(CronExpression.EVERY_DAY_AT_1AM)
 	// CronExpression.EVERY_10_SECONDS
-
-	// EVERY_DAY_AT_1AM
-	// public async verifyChannels() {
-	// 	const users = await this.prismaService.user.findMany({
-	// 		include: {
-	// 			notificationSettings: true
-	// 		}
-	// 	})
-	// 	console.log('Verify Channels')
-	// 	for (const user of users) {
-	// 		const followersCount = await this.prismaService.follow.count({
-	// 			where: {
-	// 				followingId: user.id
-	// 			}
-	// 		})
-
-	// 		if (followersCount > 10 && !user.isVerified) {
-	// 			await this.prismaService.user.update({
-	// 				where: {
-	// 					id: user.id
-	// 				},
-	// 				data: {
-	// 					isVerified: true
-	// 				}
-	// 			})
-
-	// 			await this.mailService.sendVerifyChannel(user.email)
-
-	// 			if (user.notificationSettings?.siteNotifications) {
-	// 				await this.notificationService.createVerifyChannel(user.id)
-	// 			}
-
-	// 			if (
-	// 				user.notificationSettings?.telegramNotifications &&
-	// 				user.telegramId
-	// 			) {
-	// 				await this.telegramService.sendVerifyChannel(
-	// 					user.telegramId
-	// 				)
-	// 			}
-	// 		}
-	// 	}
-	// }
 	@Cron(CronExpression.EVERY_DAY_AT_1AM)
 	public async deleteOldNotifications() {
 		const sevenDaysAgo = new Date()

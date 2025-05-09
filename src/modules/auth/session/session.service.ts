@@ -14,7 +14,7 @@ import { PrismaService } from '@/src/core/prisma/prisma.service'
 import { RedisService } from '@/src/core/redis/redis.service'
 import { parseBoolean } from '@/src/shared/utils/parse-boolean.util'
 import { getSessionMetadata } from '@/src/shared/utils/session-metadata.util'
-import { destroySession, saveSession } from '@/src/shared/utils/session.util'
+import { saveSession } from '@/src/shared/utils/session.util'
 
 import { VerificationService } from '../verification/verification.service'
 
@@ -70,9 +70,6 @@ export class SessionService {
 		const sessionData: any = await this.redisService.get(
 			`${this.configService.getOrThrow<string>('SESSION_FOLDER')}${sessionId}`
 		)
-		// if (!sessionData) {
-		// 	throw new NotFoundException('Сессия не обнаружена')
-		// }
 
 		const session = JSON.parse(sessionData)
 
@@ -120,8 +117,8 @@ export class SessionService {
 			}
 
 			const totp = new TOTP({
-				issuer: 'Miodly',
-				label: `${user.email} Miodly`,
+				issuer: 'Glowspot',
+				label: `${user.email} Glowspot`,
 				algorithm: 'SHA1',
 				digits: 6,
 				secret: user.totpSecret ?? ''
@@ -139,37 +136,6 @@ export class SessionService {
 		return saveSession(req, user, metadata)
 	}
 
-	// public async logout(req: Request) {
-	// 	return destroySession(req, this.configService)
-	// }
-
-	// // public async clearSession(req: Request) {
-	// // 	console.log('Clearing session cookies...')
-
-	// // 	req?.res?.clearCookie(
-	// // 		this.configService.getOrThrow<string>('SESSION_NAME')
-	// // 	)
-
-	// // 	return true
-	// // }
-	// public async clearSession(req: Request) {
-	// 	const sessionName =
-	// 		this.configService.getOrThrow<string>('SESSION_NAME')
-
-	// 	req?.res?.clearCookie(sessionName, {
-	// 		domain: this.configService.getOrThrow<string>('SESSION_DOMAIN'),
-	// 		path: '/',
-	// 		httpOnly: parseBoolean(
-	// 			this.configService.getOrThrow<string>('SESSION_HTTP_ONLY')
-	// 		),
-	// 		secure: parseBoolean(
-	// 			this.configService.getOrThrow<string>('SESSION_SECURE')
-	// 		),
-	// 		sameSite: 'lax'
-	// 	})
-
-	// 	return true
-	// }
 	public async logout(req: Request) {
 		const sessionName =
 			this.configService.getOrThrow<string>('SESSION_NAME')

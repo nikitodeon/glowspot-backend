@@ -19,8 +19,8 @@ export class TotpService {
 			.substring(0, 24)
 
 		const totp = new TOTP({
-			issuer: 'Miodly',
-			label: `${user.email} Miodly`,
+			issuer: 'Glowspot',
+			label: `${user.email} Glowspot`,
 			algorithm: 'SHA1',
 			digits: 6,
 			secret
@@ -36,8 +36,8 @@ export class TotpService {
 		const { secret, pin } = input
 
 		const totp = new TOTP({
-			issuer: 'Miodly',
-			label: `${user.email} Miodly`,
+			issuer: 'Glowspot',
+			label: `${user.email} Glowspot`,
 			algorithm: 'SHA1',
 			digits: 6,
 			secret

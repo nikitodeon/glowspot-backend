@@ -331,11 +331,6 @@ export class EventCommonService {
 					paramCounter += 2
 				}
 			}
-			// Собираем полный запрос
-			// const whereClause =
-			// 	whereConditions.length > 0
-			// 		? `WHERE ${whereConditions.join(' AND ')}`
-			// 		: ''
 
 			const query = `
 			  SELECT 

@@ -6,8 +6,6 @@ import type { GqlContext } from '@/src/shared/types/gql-context.types'
 
 import { AuthModel } from '../account/models/auth.model'
 
-// import { UserModel } from '../account/models/user.model'
-
 import { LoginInput } from './inputs/login.input'
 import { SessionModel } from './models/session.model'
 import { SessionService } from './session.service'

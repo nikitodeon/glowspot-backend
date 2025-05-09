@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import axios from 'axios'
-// import * as Upload from 'graphql-upload/Upload.js'
 import * as sharp from 'sharp'
-
-//   import { UpdateEventInput } from './inputs/update-event.input';
 
 import {
 	EventProperty,
@@ -164,7 +161,6 @@ export class EventOrganizationService {
 				}
 			}
 
-			// Фильтруем входные photoUrls, оставляя только те, что похожи на пути в хранилище
 			const filteredInputPaths = (eventData.photoUrls || []).filter(
 				path =>
 					path.startsWith('/events/') || path.startsWith('/users/')
@@ -229,7 +225,7 @@ export class EventOrganizationService {
 		}
 
 		let locationId = event.locationId
-		// Обновляем или создаем новую локацию, если адрес изменился
+
 		if (
 			address !== event.location?.address ||
 			city !== event.location?.city ||
@@ -265,7 +261,6 @@ export class EventOrganizationService {
 			locationId = locations[0].id
 		}
 
-		// Обработка новых фото
 		const photoPaths: string[] = []
 		if (photos && photos.length > 0) {
 			for (const photo of photos) {
@@ -327,7 +322,6 @@ export class EventOrganizationService {
 	}
 	async deleteEvent(eventId: string, userId: string) {
 		try {
-			// 1. Проверяем существует ли мероприятие и является ли пользователь организатором
 			const event = await this.prisma.event.findUnique({
 				where: { id: eventId },
 				select: { organizerId: true, photoUrls: true }
@@ -341,7 +335,6 @@ export class EventOrganizationService {
 				throw new Error('You are not the organizer of this event')
 			}
 
-			// 2. Удаляем фотографии из хранилища
 			if (event.photoUrls && event.photoUrls.length > 0) {
 				await Promise.all(
 					event.photoUrls.map(photoUrl =>
@@ -513,7 +506,6 @@ export class EventOrganizationService {
 			const mappedEvents = events
 				.map(event => {
 					try {
-						// Преобразование BigInt в строку для безопасного логирования
 						const eventForLog = {
 							...event,
 							max_participants: event.maxParticipants?.toString()

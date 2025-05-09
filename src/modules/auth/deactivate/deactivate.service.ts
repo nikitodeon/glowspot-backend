@@ -102,12 +102,7 @@ export class DeactivateService {
 	private async sendDeactivateToken(
 		req: Request,
 		input: DeactivateAccountInput,
-		// user: User & {
-		// notificationSettings?: {
-		// 	telegramNotifications?: boolean
-		// 	siteNotifications?: boolean
-		// }
-		// }, // Типизируем user для notificationSettings,
+
 		userAgent: string
 	) {
 		const { email } = input

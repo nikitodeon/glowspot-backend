@@ -41,7 +41,7 @@ export function VerifyChannelTemplate() {
 							Если у вас есть вопросы, напишите нам на{' '}
 							<Link
 								href="mailto:nikitodeon@gmail.com"
-								className="text-[#18b9ae] underline"
+								className="text-black underline"
 							>
 								nikitodeon@gmail.com
 							</Link>.

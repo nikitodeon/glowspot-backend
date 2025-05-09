@@ -70,18 +70,6 @@ export class UserModel implements User {
 	@Field(() => NotificationSettingsModel, { nullable: true })
 	public notificationSettings: NotificationSettingsModel
 
-	//   @Field(() => [EventModel], { nullable: true })
-	//   public organizedEvents: EventModel[]  // ✅ Добавлено
-
-	//   @Field(() => [EventModel], { nullable: true })
-	//   public participatingIn: EventModel[]  // ✅ Добавлено
-
-	//   @Field(() => [PaymentModel], { nullable: true })
-	//   public payments: PaymentModel[]  // ✅ Добавлено
-
-	//   @Field(() => [EventReviewModel], { nullable: true })
-	//   public reviews: EventReviewModel[]  // ✅ Добавлено
-
 	@Field(() => Date)
 	public createdAt: Date
 

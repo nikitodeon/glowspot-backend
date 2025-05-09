@@ -23,7 +23,6 @@ export class EventParticipationService {
 
 	async participateInEvent(eventId: string, userId: string) {
 		try {
-			// Проверяем, что событие существует
 			const event = await this.prisma.event.findUnique({
 				where: { id: eventId }
 			})
@@ -32,7 +31,6 @@ export class EventParticipationService {
 				throw new NotFoundException('Event not found')
 			}
 
-			// Проверяем, что пользователь еще не участник
 			const existingParticipation = await this.prisma.event.findFirst({
 				where: {
 					id: eventId,
@@ -46,7 +44,6 @@ export class EventParticipationService {
 				)
 			}
 
-			// Добавляем участника
 			await this.prisma.event.update({
 				where: { id: eventId },
 				data: {
@@ -64,7 +61,6 @@ export class EventParticipationService {
 	}
 	async leaveEvent(eventId: string, userId: string) {
 		try {
-			// Проверяем, что событие существует
 			const event = await this.prisma.event.findUnique({
 				where: { id: eventId }
 			})
@@ -73,7 +69,6 @@ export class EventParticipationService {
 				throw new NotFoundException('Event not found')
 			}
 
-			// Проверяем, что пользователь действительно участник
 			const existingParticipation = await this.prisma.event.findFirst({
 				where: {
 					id: eventId,
@@ -87,7 +82,6 @@ export class EventParticipationService {
 				)
 			}
 
-			// Удаляем участника
 			await this.prisma.event.update({
 				where: { id: eventId },
 				data: {

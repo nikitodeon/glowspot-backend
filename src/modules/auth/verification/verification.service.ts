@@ -53,11 +53,6 @@ export class VerificationService {
 			data: {
 				isEmailVerified: true
 			}
-			// select: {
-			// 	id: true,
-			// 	email: true, // Явно выбираем email
-			// 	username: true
-			// }
 		})
 		if (!user.email) {
 			throw new BadRequestException('Email пользователя отсутствует!')
@@ -70,10 +65,6 @@ export class VerificationService {
 		})
 
 		const metadata = getSessionMetadata(req, userAgent)
-
-		// const fullUser = await this.prismaService.user.findUnique({
-		// where: { id: user.id }
-		// });
 
 		return saveSession(req, user, metadata)
 	}

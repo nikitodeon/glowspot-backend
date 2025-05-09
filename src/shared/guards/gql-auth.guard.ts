@@ -16,12 +16,6 @@ export class GqlAuthGuard implements CanActivate {
 		const ctx = GqlExecutionContext.create(context)
 		const request = ctx.getContext().req
 
-		const req = ctx.getContext().req
-		// console.log('Запрос в GraphQL Guard:', {
-		// 	cookies: req.headers.cookie, // Проверяем, передаётся ли сессия в куках
-		// 	session: req.session // Проверяем, есть ли сессия в объекте запроса
-
-		// })
 		if (typeof request.session.userId === 'undefined') {
 			throw new UnauthorizedException('Пользователь не авторизован')
 		}

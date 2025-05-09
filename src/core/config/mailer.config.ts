@@ -13,7 +13,7 @@ export function getMailerConfig(configService: ConfigService): MailerOptions {
 			}
 		},
 		defaults: {
-			from: `"Miodly" ${configService.getOrThrow<string>('MAIL_LOGIN')}`
+			from: `"Glowspot" ${configService.getOrThrow<string>('MAIL_LOGIN')}`
 		}
 	}
 }

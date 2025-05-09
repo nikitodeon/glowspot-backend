@@ -14,11 +14,6 @@ import { UserModel } from './models/user.model'
 export class AccountResolver {
 	public constructor(private readonly accountService: AccountService) {}
 
-	// @Query(() => [UserModel], { name: 'findAllUsers' })
-	// public async findAll() {
-	// 	return this.accountService.findAll()
-	// }
-
 	@Authorization()
 	@Query(() => UserModel, { name: 'findProfile' })
 	public async me(@Authorized('id') id: string) {

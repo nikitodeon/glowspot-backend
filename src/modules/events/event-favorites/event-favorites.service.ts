@@ -18,13 +18,11 @@ export class EventFavoritesService {
 
 	async addToFavorites(eventId: string, userId: string): Promise<boolean> {
 		try {
-			// Проверяем существование события
 			const event = await this.prisma.event.findUnique({
 				where: { id: eventId }
 			})
 			if (!event) throw new NotFoundException('Event not found')
 
-			// Проверяем, не добавлено ли уже в избранное
 			const existingFavorite = await this.prisma.user.findFirst({
 				where: {
 					id: userId,
@@ -36,7 +34,6 @@ export class EventFavoritesService {
 				throw new ConflictException('Event already in favorites')
 			}
 
-			// Добавляем в избранное
 			await this.prisma.user.update({
 				where: { id: userId },
 				data: { favorites: { connect: { id: eventId } } }
@@ -54,13 +51,11 @@ export class EventFavoritesService {
 		userId: string
 	): Promise<boolean> {
 		try {
-			// Проверяем существование события
 			const event = await this.prisma.event.findUnique({
 				where: { id: eventId }
 			})
 			if (!event) throw new NotFoundException('Event not found')
 
-			// Проверяем, есть ли в избранном
 			const existingFavorite = await this.prisma.user.findFirst({
 				where: {
 					id: userId,
@@ -72,7 +67,6 @@ export class EventFavoritesService {
 				throw new NotFoundException('Event not found in favorites')
 			}
 
-			// Удаляем из избранного
 			await this.prisma.user.update({
 				where: { id: userId },
 				data: { favorites: { disconnect: { id: eventId } } }

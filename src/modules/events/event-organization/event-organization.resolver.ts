@@ -3,8 +3,6 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql'
 import { User } from '@prisma/generated'
 import * as GraphQLUpload from 'graphql-upload/GraphQLUpload.js'
 
-// import * as Upload from 'graphql-upload/Upload.js'
-
 import { Authorization } from '@/src/shared/decorators/auth.decorator'
 import { Authorized } from '@/src/shared/decorators/authorized.decorator'
 import { GqlAuthGuard } from '@/src/shared/guards/gql-auth.guard'
@@ -30,7 +28,6 @@ export class EventOrganizationResolver {
 		photos: Promise<any>[],
 		@Authorized() user: User
 	) {
-		// Дожидаемся разрешения всех промисов
 		const resolvedPhotos = await Promise.all(photos)
 		return this.eventOrganizationService.createEvent(
 			input,
